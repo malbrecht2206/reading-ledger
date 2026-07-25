@@ -25,9 +25,2013 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
-  <script src="firebase-config.js"></script>
+  <script>
+    // Firebase project configuration.
+    // These values identify your Firebase project (they are not secret —
+    // access control is enforced by Firestore security rules, not by hiding this file).
+    const firebaseConfig = {
+      apiKey: "AIzaSyDKk0-kwBy2ng8r2P29QSfBYinSpkmUWRA",
+      authDomain: "reading-ledger-f2744.firebaseapp.com",
+      projectId: "reading-ledger-f2744",
+      storageBucket: "reading-ledger-f2744.firebasestorage.app",
+      messagingSenderId: "658476170551",
+      appId: "1:658476170551:web:4b82794d9a2f654404eeb2"
+    };
+    firebase.initializeApp(firebaseConfig);
+  </script>
 
-  <!-- The app itself, transformed by Babel right in the browser -->
-  <script type="text/babel" data-presets="react" src="app.jsx?v=2"></script>
+  <!-- The app itself, inlined directly (no separate network request that a carrier proxy could interfere with) -->
+  <script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef, useMemo } = React;
+
+function Icon({ children, size = 16, color, className, viewBox = "0 0 24 24" }) {
+  return (
+    <svg width={size} height={size} viewBox={viewBox} fill="none" stroke={color || "currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      {children}
+    </svg>
+  );
+}
+function Search(props) { return <Icon {...props}><circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></Icon>; }
+function Plus(props) { return <Icon {...props}><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></Icon>; }
+function X(props) { return <Icon {...props}><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></Icon>; }
+function BookOpen(props) { return <Icon {...props}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></Icon>; }
+function Library(props) { return <Icon {...props}><path d="M4 22V6a2 2 0 0 1 2-2h2v18" /><path d="M12 22V4h2a2 2 0 0 1 2 2v16" /><path d="M20 22V8l-2-2" /></Icon>; }
+function LayoutGrid(props) { return <Icon {...props}><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /></Icon>; }
+function Target(props) { return <Icon {...props}><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1" /></Icon>; }
+function Sparkles(props) { return <Icon {...props}><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z" /><path d="M19 15l.7 2.1L22 18l-2.3.9L19 21l-.7-2.1L16 18l2.3-.9z" /></Icon>; }
+function Loader2(props) { return <Icon {...props}><line x1="12" y1="2" x2="12" y2="6" /><line x1="12" y1="18" x2="12" y2="22" /><line x1="4.9" y1="4.9" x2="7.8" y2="7.8" /><line x1="16.2" y1="16.2" x2="19.1" y2="19.1" /><line x1="2" y1="12" x2="6" y2="12" /><line x1="18" y1="12" x2="22" y2="12" /><line x1="4.9" y1="19.1" x2="7.8" y2="16.2" /><line x1="16.2" y1="7.8" x2="19.1" y2="4.9" /></Icon>; }
+function ChevronDown(props) { return <Icon {...props}><polyline points="6 9 12 15 18 9" /></Icon>; }
+function ChevronRight(props) { return <Icon {...props}><polyline points="9 6 15 12 9 18" /></Icon>; }
+function Trash2(props) { return <Icon {...props}><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" /></Icon>; }
+function Play(props) { return <Icon {...props}><polygon points="6 3 20 12 6 21 6 3" /></Icon>; }
+function CheckCircle2(props) { return <Icon {...props}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></Icon>; }
+function BookX(props) { return <Icon {...props}><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /><line x1="10" y1="8" x2="14" y2="12" /><line x1="14" y1="8" x2="10" y2="12" /></Icon>; }
+function Quote(props) { return <Icon {...props}><path d="M3 21c3 0 7-1.5 7-8V5H3v8h4c0 4-1 6-4 6z" /><path d="M14 21c3 0 7-1.5 7-8V5h-7v8h4c0 4-1 6-4 6z" /></Icon>; }
+
+function StatsIcon({ size = 14 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="20" x2="18" y2="10" />
+      <line x1="12" y1="20" x2="12" y2="4" />
+      <line x1="6" y1="20" x2="6" y2="14" />
+    </svg>
+  );
+}
+
+function SeriesIcon({ size = 14 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="4" rx="1" />
+      <rect x="3" y="10" width="18" height="4" rx="1" />
+      <rect x="3" y="16" width="12" height="4" rx="1" />
+    </svg>
+  );
+}
+
+const DATA_VERSION = 2;
+const STATUS_ORDER = ["In Progress", "TBR", "Read", "DNF"];
+const STATUS_LABEL = {
+  "TBR": "To Be Read",
+  "In Progress": "Currently Reading",
+  "Read": "Read",
+  "DNF": "Did Not Finish"
+};
+
+const SEED_BOOKS = 
+[{"id":1,"title":"Sorcerer's Stone","series":"Harry Potter","seriesNum":1.0,"author":"J.K. Rowling","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":1997,"monthStarted":null,"yearCompleted":1997,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Physical","quote":null,"dateAdded":null,"priority":1},{"id":2,"title":"Chamber of Secrets","series":"Harry Potter","seriesNum":2.0,"author":"J.K. Rowling","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":1998,"monthStarted":null,"yearCompleted":1998,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Physical","quote":null,"dateAdded":null,"priority":2},{"id":3,"title":"Prisoner of Azkaban","series":"Harry Potter","seriesNum":3.0,"author":"J.K. Rowling","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":1999,"monthStarted":null,"yearCompleted":1999,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Physical","quote":null,"dateAdded":null,"priority":3},{"id":4,"title":"Goblet of Fire","series":"Harry Potter","seriesNum":4.0,"author":"J.K. Rowling","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2000,"monthStarted":null,"yearCompleted":2000,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Physical","quote":null,"dateAdded":null,"priority":4},{"id":5,"title":"Order of the Phoenix","series":"Harry Potter","seriesNum":5.0,"author":"J.K. Rowling","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2003,"monthStarted":null,"yearCompleted":2003,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Physical","quote":null,"dateAdded":null,"priority":5},{"id":6,"title":"Half-Blood Prince","series":"Harry Potter","seriesNum":6.0,"author":"J.K. Rowling","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2005,"monthStarted":null,"yearCompleted":2005,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Physical","quote":null,"dateAdded":null,"priority":6},{"id":7,"title":"Deathly Hallows","series":"Harry Potter","seriesNum":7.0,"author":"J.K. Rowling","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2007,"monthStarted":null,"yearCompleted":2007,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Physical","quote":null,"dateAdded":null,"priority":7},{"id":8,"title":"Theft of Swords","series":"Riyria Revelations","seriesNum":1.0,"author":"Michael J. Sullivan","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2012,"monthStarted":null,"yearCompleted":2012,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Physical","quote":null,"dateAdded":null,"priority":8},{"id":9,"title":"Rise of Empire","series":"Riyria Revelations","seriesNum":2.0,"author":"Michael J. Sullivan","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2012,"monthStarted":null,"yearCompleted":2012,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Physical","quote":null,"dateAdded":null,"priority":9},{"id":10,"title":"Blood Song","series":"Raven's Shadow","seriesNum":1.0,"author":"Anthony Ryan","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2013,"monthStarted":null,"yearCompleted":2013,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":10},{"id":11,"title":"Heir of Novron","series":"Riyria Revelations","seriesNum":3.0,"author":"Michael J. Sullivan","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2013,"monthStarted":null,"yearCompleted":2013,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":11},{"id":12,"title":"House of Blades","series":"Traveler's Gate Trilogy","seriesNum":1.0,"author":"Will Wight","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2013,"monthStarted":null,"yearCompleted":2013,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":12},{"id":13,"title":"Crimson Vault","series":"Traveler's Gate Trilogy","seriesNum":2.0,"author":"Will Wight","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2013,"monthStarted":null,"yearCompleted":2013,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":13},{"id":14,"title":"Way of Kings","series":"The Stormlight Archive","seriesNum":1.0,"author":"Brandon Sanderson","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2014,"monthStarted":null,"yearCompleted":2014,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Physical","quote":null,"dateAdded":null,"priority":14},{"id":15,"title":"Words of Radiance","series":"The Stormlight Archive","seriesNum":2.0,"author":"Brandon Sanderson","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2014,"monthStarted":null,"yearCompleted":2014,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":15},{"id":16,"title":"The Blacksmith's Son","series":"Mageborn","seriesNum":1.0,"author":"Michael G. Manning","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2014,"monthStarted":null,"yearCompleted":2014,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":16},{"id":17,"title":"The Line of Illeniel","series":"Mageborn","seriesNum":2.0,"author":"Michael G. Manning","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2014,"monthStarted":null,"yearCompleted":2014,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":17},{"id":18,"title":"The Archmage Unbound","series":"Mageborn","seriesNum":3.0,"author":"Michael G. Manning","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2014,"monthStarted":null,"yearCompleted":2014,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":18},{"id":19,"title":"The God-Stone War","series":"Mageborn","seriesNum":4.0,"author":"Michael G. Manning","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2014,"monthStarted":null,"yearCompleted":2014,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":19},{"id":20,"title":"City of Light","series":"Traveler's Gate Trilogy","seriesNum":3.0,"author":"Will Wight","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2014,"monthStarted":null,"yearCompleted":2014,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":20},{"id":21,"title":"Of Sea and Shadow","series":"The Elder Empire: Sea","seriesNum":1.0,"author":"Will Wight","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2014,"monthStarted":null,"yearCompleted":2014,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":21},{"id":22,"title":"Of Dawn and Darkness","series":"The Elder Empire: Sea","seriesNum":2.0,"author":"Will Wight","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2015,"monthStarted":null,"yearCompleted":2015,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":22},{"id":23,"title":"Unsouled","series":"Cradle","seriesNum":1.0,"author":"Will Wight","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2016,"monthStarted":null,"yearCompleted":2016,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":23},{"id":24,"title":"Oathbringer","series":"The Stormlight Archive","seriesNum":3.0,"author":"Brandon Sanderson","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2017,"monthStarted":null,"yearCompleted":2017,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":24},{"id":25,"title":"Eye of the World","series":"Wheel of Time","seriesNum":1.0,"author":"Robert Jordan","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2017,"monthStarted":null,"yearCompleted":2017,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Physical","quote":null,"dateAdded":null,"priority":25},{"id":26,"title":"Soulsmith","series":"Cradle","seriesNum":2.0,"author":"Will Wight","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2017,"monthStarted":null,"yearCompleted":2017,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":26},{"id":27,"title":"Blackflame","series":"Cradle","seriesNum":3.0,"author":"Will Wight","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2017,"monthStarted":null,"yearCompleted":2017,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":27},{"id":28,"title":"Skysworn","series":"Cradle","seriesNum":4.0,"author":"Will Wight","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2017,"monthStarted":null,"yearCompleted":2017,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":28},{"id":29,"title":"Sufficiently Advanced Magic","series":"Arcane Ascension","seriesNum":1.0,"author":"Andrew Rowe","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2018,"monthStarted":null,"yearCompleted":2018,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":29},{"id":30,"title":"On the Shoulders of Titans","series":"Arcane Ascension","seriesNum":2.0,"author":"Andrew Rowe","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2018,"monthStarted":null,"yearCompleted":2018,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":30},{"id":31,"title":"Kings of the Wyld","series":"The Band","seriesNum":1.0,"author":"Nicholas Eames","pages":422.0,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2018,"monthStarted":null,"yearCompleted":2018,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":31},{"id":32,"title":"Bloody Rose","series":"The Band","seriesNum":2.0,"author":"Nicholas Eames","pages":574.0,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2018,"monthStarted":null,"yearCompleted":2018,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":32},{"id":33,"title":"Ghostwater","series":"Cradle","seriesNum":5.0,"author":"Will Wight","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2018,"monthStarted":null,"yearCompleted":2018,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":33},{"id":34,"title":"Six Sacred Swords","series":"Weapons and Wielders","seriesNum":1.0,"author":"Andrew Rowe","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2019,"monthStarted":null,"yearCompleted":2019,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":34},{"id":35,"title":"Tower Lord","series":"Raven's Shadow","seriesNum":2.0,"author":"Anthony Ryan","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2019,"monthStarted":null,"yearCompleted":2019,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":35},{"id":36,"title":"The Way of Shadows","series":"Night Angel","seriesNum":1.0,"author":"Brent Weeks","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2019,"monthStarted":null,"yearCompleted":2019,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":36},{"id":37,"title":"Shadow's Edge","series":"Night Angel","seriesNum":2.0,"author":"Brent Weeks","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2019,"monthStarted":null,"yearCompleted":2019,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":37},{"id":38,"title":"Beyond the Shadows","series":"Night Angel","seriesNum":3.0,"author":"Brent Weeks","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2019,"monthStarted":null,"yearCompleted":2019,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":38},{"id":39,"title":"Towers of Heaven Book 1","series":"Towers of Heaven","seriesNum":1.0,"author":"Cameron Milan","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2019,"monthStarted":null,"yearCompleted":2019,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":39},{"id":40,"title":"Edge of Eons","series":"The Adept Archives","seriesNum":1.0,"author":"Darren Hultberg Jr.","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2019,"monthStarted":null,"yearCompleted":2019,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":40},{"id":41,"title":"Bounty of Blades","series":"The Adept Archives","seriesNum":2.0,"author":"Darren Hultberg Jr.","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2019,"monthStarted":null,"yearCompleted":2019,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":41},{"id":42,"title":"World Tree Online","series":"World Tree Online","seriesNum":1.0,"author":"E.A. Hooper","pages":495.0,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2019,"monthStarted":null,"yearCompleted":2019,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":42},{"id":43,"title":"Demon Lord","series":"World Tree Online","seriesNum":2.0,"author":"E.A. Hooper","pages":439.0,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2019,"monthStarted":null,"yearCompleted":2019,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":43},{"id":44,"title":"World Tree's End","series":"World Tree Online","seriesNum":3.0,"author":"E.A. Hooper","pages":475.0,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2019,"monthStarted":null,"yearCompleted":2019,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":44},{"id":45,"title":"The Rage of Dragons","series":"The Burning","seriesNum":1.0,"author":"Evan Winter","pages":578.0,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2019,"monthStarted":null,"yearCompleted":2019,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":45},{"id":46,"title":"The First Step","series":"A Thousand Li","seriesNum":1.0,"author":"Tao Wong","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2019,"monthStarted":null,"yearCompleted":2019,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":46},{"id":47,"title":"Underlord","series":"Cradle","seriesNum":6.0,"author":"Will Wight","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2019,"monthStarted":null,"yearCompleted":2019,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":47},{"id":48,"title":"Uncrowned","series":"Cradle","seriesNum":7.0,"author":"Will Wight","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2019,"monthStarted":null,"yearCompleted":2019,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":48},{"id":49,"title":"The Torch that Ignites the Stars","series":"Arcane Ascension","seriesNum":3.0,"author":"Andrew Rowe","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2020,"monthStarted":null,"yearCompleted":2020,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":49},{"id":50,"title":"The Black Prism","series":"Lightbringer","seriesNum":1.0,"author":"Brent Weeks","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2020,"monthStarted":null,"yearCompleted":2020,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":50},{"id":51,"title":"The Blinding Knife","series":"Lightbringer","seriesNum":2.0,"author":"Brent Weeks","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2020,"monthStarted":null,"yearCompleted":2020,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":51},{"id":52,"title":"Iron Prince","series":"Warformed: Stormweaver","seriesNum":1.0,"author":"Bryce O'Connor, Luke Chmilenko","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2020,"monthStarted":null,"yearCompleted":2020,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":52},{"id":53,"title":"The Fires of Vengenace","series":"The Burning","seriesNum":2.0,"author":"Evan Winter","pages":529.0,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2020,"monthStarted":null,"yearCompleted":2020,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":53},{"id":54,"title":"The Great Hunt","series":"Wheel of Time","seriesNum":2.0,"author":"Robert Jordan","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2020,"monthStarted":null,"yearCompleted":2020,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":54},{"id":55,"title":"Dragon Reborn","series":"Wheel of Time","seriesNum":3.0,"author":"Robert Jordan","pages":0.0,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2020,"monthStarted":null,"yearCompleted":2020,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Mixed","quote":null,"dateAdded":null,"priority":55},{"id":56,"title":"Wintersteel","series":"Cradle","seriesNum":8.0,"author":"Will Wight","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2020,"monthStarted":null,"yearCompleted":2020,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":56},{"id":57,"title":"A Testament of Steel","series":"Instrument of Omens","seriesNum":1.0,"author":"Davis Ashura","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2021,"monthStarted":null,"yearCompleted":2021,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":57},{"id":58,"title":"Memories of Prophecies","series":"Instrument of Omens","seriesNum":2.0,"author":"Davis Ashura","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2021,"monthStarted":null,"yearCompleted":2021,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":58},{"id":59,"title":"Bloodline","series":"Cradle","seriesNum":9.0,"author":"Will Wight","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2021,"monthStarted":null,"yearCompleted":2021,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":59},{"id":60,"title":"Reaper","series":"Cradle","seriesNum":10.0,"author":"Will Wight","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2021,"monthStarted":null,"yearCompleted":2021,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":60},{"id":61,"title":"Red Rising","series":"Red Rising Saga","seriesNum":1.0,"author":"Pierce Brown","pages":null,"audioHours":0,"status":"Read","genre":"Sci-Fi","yearStarted":2021,"monthStarted":null,"yearCompleted":2021,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Physical","quote":null,"dateAdded":null,"priority":61},{"id":62,"title":"The Silence of Unworthy Gods","series":"Arcane Ascension","seriesNum":4.0,"author":"Andrew Rowe","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2022,"monthStarted":null,"yearCompleted":2022,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":62},{"id":63,"title":"Dreadgod","series":"Cradle","seriesNum":11.0,"author":"Will Wight","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2022,"monthStarted":null,"yearCompleted":2022,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":63},{"id":64,"title":"Seventh Bridge to the Heavens 1","series":"First Fist","seriesNum":1.0,"author":"TJ Reynolds","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2022,"monthStarted":null,"yearCompleted":2022,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":64},{"id":65,"title":"The Hand of the Sun King","series":"Pact and Pattern","seriesNum":1.0,"author":"J.T. Greathouse","pages":372.0,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2022,"monthStarted":null,"yearCompleted":2022,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":65},{"id":66,"title":"Dune","series":"Dune Saga","seriesNum":1.0,"author":"Frank Herbert","pages":688.0,"audioHours":0,"status":"Read","genre":"Sci-Fi","yearStarted":2022,"monthStarted":null,"yearCompleted":2022,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":66},{"id":67,"title":"Golden Sun","series":"Red Rising Saga","seriesNum":2.0,"author":"Pierce Brown","pages":null,"audioHours":0,"status":"Read","genre":"Sci-Fi","yearStarted":2022,"monthStarted":null,"yearCompleted":2022,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":67},{"id":68,"title":"Morning Star","series":"Red Rising Saga","seriesNum":3.0,"author":"Pierce Brown","pages":null,"audioHours":0,"status":"Read","genre":"Sci-Fi","yearStarted":2022,"monthStarted":null,"yearCompleted":2022,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":68},{"id":69,"title":"The Captain","series":"The Last Horizon","seriesNum":1.0,"author":"Will Wight","pages":420.0,"audioHours":0,"status":"Read","genre":"Sci-Fi, Fantasy","yearStarted":2023,"monthStarted":null,"yearCompleted":2023,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":69},{"id":70,"title":"Fire and Song","series":"Warformed: Stormweaver","seriesNum":2.0,"author":"Bryce O'Connor, Luke Chmilenko","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2023,"monthStarted":null,"yearCompleted":2023,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":70},{"id":71,"title":"Darkening Skies","series":"Path of the Thunderbird","seriesNum":1.0,"author":"Eden Hudson","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2023,"monthStarted":null,"yearCompleted":2023,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":71},{"id":72,"title":"Stone Soul","series":"Path of the Thunderbird","seriesNum":2.0,"author":"Eden Hudson","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2023,"monthStarted":null,"yearCompleted":2023,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":72},{"id":73,"title":"Waybound","series":"Cradle","seriesNum":12.0,"author":"Will Wight","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2023,"monthStarted":null,"yearCompleted":2023,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":73},{"id":74,"title":"Fellowship of the Ring","series":"Lord of the Rings","seriesNum":1.0,"author":"J.R.R Tolkien","pages":216.0,"audioHours":11.32,"status":"Read","genre":"Fantasy","yearStarted":2024,"monthStarted":12,"yearCompleted":2024,"monthCompleted":12,"dateStarted":"2024-12-01","dateCompleted":"2024-12-15","format":"Mixed","quote":null,"dateAdded":null,"priority":74},{"id":75,"title":"The Engineer","series":"The Last Horizon","seriesNum":2.0,"author":"Will Wight","pages":465.0,"audioHours":0,"status":"Read","genre":"Sci-Fi, Fantasy","yearStarted":2024,"monthStarted":null,"yearCompleted":2024,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":75},{"id":76,"title":"The Hobbit","series":null,"seriesNum":null,"author":"J.R.R Tolkien","pages":300.0,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2024,"monthStarted":null,"yearCompleted":2024,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Physical","quote":null,"dateAdded":null,"priority":76},{"id":77,"title":"The Knight","series":"The Last Horizon","seriesNum":3.0,"author":"Will Wight","pages":407.0,"audioHours":0,"status":"Read","genre":"Sci-Fi, Fantasy","yearStarted":2024,"monthStarted":null,"yearCompleted":2024,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":77},{"id":78,"title":"Age of Myth","series":"The Legends of the First Empire","seriesNum":1.0,"author":"Michael J. Sullivan","pages":null,"audioHours":null,"status":"Read","genre":"Fantasy","yearStarted":2024,"monthStarted":null,"yearCompleted":2024,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Audiobook","quote":null,"dateAdded":null,"priority":78},{"id":79,"title":"Threshold","series":"Cradle","seriesNum":12.5,"author":"Will Wight","pages":null,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2024,"monthStarted":null,"yearCompleted":2024,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":79},{"id":80,"title":"Two Towers","series":"Lord of the Rings","seriesNum":2.0,"author":"J.R.R Tolkien","pages":176.0,"audioHours":10.38,"status":"Read","genre":"Fantasy","yearStarted":2024,"monthStarted":12,"yearCompleted":2025,"monthCompleted":1,"dateStarted":"2024-12-16","dateCompleted":"2025-01-05","format":"Mixed","quote":null,"dateAdded":null,"priority":80},{"id":81,"title":"Return of the King","series":"Lord of the Rings","seriesNum":3.0,"author":"J.R.R Tolkien","pages":216.0,"audioHours":10.93,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":1,"yearCompleted":2025,"monthCompleted":1,"dateStarted":"2025-01-05","dateCompleted":"2025-01-17","format":"Mixed","quote":null,"dateAdded":null,"priority":81},{"id":82,"title":"Empire of Silence","series":"Sun Eater Series","seriesNum":1.0,"author":"Christopher Ruocchio","pages":624.0,"audioHours":0,"status":"Read","genre":"Sci-Fi","yearStarted":2025,"monthStarted":1,"yearCompleted":2025,"monthCompleted":1,"dateStarted":"2025-01-18","dateCompleted":"2025-01-31","format":"Physical","quote":null,"dateAdded":null,"priority":82},{"id":83,"title":"The Road","series":null,"seriesNum":null,"author":"Cormac McCarthy","pages":287.0,"audioHours":0,"status":"Read","genre":"Other","yearStarted":2025,"monthStarted":2,"yearCompleted":2025,"monthCompleted":2,"dateStarted":"2025-02-07","dateCompleted":"2025-02-08","format":"Physical","quote":null,"dateAdded":null,"priority":83},{"id":84,"title":"The Fall (Novella)","series":"The Bound and the Broken Novellas","seriesNum":0.5,"author":"Ryan Cahill","pages":95.0,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":2,"yearCompleted":2025,"monthCompleted":2,"dateStarted":"2025-02-17","dateCompleted":"2025-02-17","format":"Kindle","quote":null,"dateAdded":null,"priority":84},{"id":85,"title":"Of Blood and Fire","series":"The Bound and the Broken","seriesNum":1.0,"author":"Ryan Cahill","pages":271.5,"audioHours":8.19,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":2,"yearCompleted":2025,"monthCompleted":2,"dateStarted":"2025-02-18","dateCompleted":"2025-02-20","format":"Mixed","quote":null,"dateAdded":null,"priority":85},{"id":86,"title":"Of Darkness and Light","series":"The Bound and the Broken","seriesNum":2.0,"author":"Ryan Cahill","pages":407.0,"audioHours":11.87,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":2,"yearCompleted":2025,"monthCompleted":3,"dateStarted":"2025-02-21","dateCompleted":"2025-03-01","format":"Mixed","quote":null,"dateAdded":null,"priority":86},{"id":87,"title":"The Exile (Novella)","series":"The Bound and the Broken Novellas","seriesNum":2.5,"author":"Ryan Cahill","pages":null,"audioHours":4.55,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":3,"yearCompleted":2025,"monthCompleted":3,"dateStarted":"2025-03-01","dateCompleted":"2025-03-01","format":"Audiobook","quote":null,"dateAdded":null,"priority":87},{"id":88,"title":"Of War and Ruin","series":"The Bound and the Broken","seriesNum":3.0,"author":"Ryan Cahill","pages":741.5,"audioHours":22.45,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":3,"yearCompleted":2025,"monthCompleted":3,"dateStarted":"2025-03-02","dateCompleted":"2025-03-15","format":"Mixed","quote":null,"dateAdded":null,"priority":88},{"id":89,"title":"The Ice (Novella)","series":"The Bound and the Broken Novellas","seriesNum":3.5,"author":"Ryan Cahill","pages":null,"audioHours":5.57,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":3,"yearCompleted":2025,"monthCompleted":3,"dateStarted":"2025-03-16","dateCompleted":"2025-03-17","format":"Audiobook","quote":null,"dateAdded":null,"priority":89},{"id":90,"title":"The Hand of the Sun King","series":"Pact and Pattern","seriesNum":1.0,"author":"J.T. Greathouse","pages":null,"audioHours":14.37,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":3,"yearCompleted":2025,"monthCompleted":3,"dateStarted":"2025-03-18","dateCompleted":"2025-03-22","format":"Audiobook","quote":null,"dateAdded":null,"priority":90},{"id":91,"title":"Howling Dark","series":"Sun Eater Series","seriesNum":2.0,"author":"Christopher Ruocchio","pages":688.0,"audioHours":0,"status":"Read","genre":"Sci-Fi","yearStarted":2025,"monthStarted":3,"yearCompleted":2025,"monthCompleted":3,"dateStarted":"2025-03-01","dateCompleted":"2025-03-25","format":"Physical","quote":null,"dateAdded":null,"priority":91},{"id":92,"title":"Project Hail Mary","series":null,"seriesNum":null,"author":"Andy Weir","pages":496.0,"audioHours":0,"status":"Read","genre":"Sci-Fi","yearStarted":2025,"monthStarted":3,"yearCompleted":2025,"monthCompleted":4,"dateStarted":"2025-03-25","dateCompleted":"2025-04-01","format":"Physical","quote":null,"dateAdded":null,"priority":92},{"id":93,"title":"The Will of the Many","series":"Hierarchy","seriesNum":1.0,"author":"James Islington","pages":320.0,"audioHours":14.12,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":4,"yearCompleted":2025,"monthCompleted":4,"dateStarted":"2025-04-03","dateCompleted":"2025-04-09","format":"Mixed","quote":null,"dateAdded":null,"priority":93},{"id":94,"title":"Rise of the Ranger","series":"The Echoes Saga","seriesNum":1.0,"author":"Philip C. Quaintrell","pages":null,"audioHours":15.2,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":4,"yearCompleted":2025,"monthCompleted":4,"dateStarted":"2025-04-14","dateCompleted":"2025-04-20","format":"Audiobook","quote":null,"dateAdded":null,"priority":94},{"id":95,"title":"The Sword of Kaigen","series":null,"seriesNum":null,"author":"M.L. Wang","pages":324.5,"audioHours":12.2,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":4,"yearCompleted":2025,"monthCompleted":4,"dateStarted":"2025-04-10","dateCompleted":"2025-04-28","format":"Mixed","quote":null,"dateAdded":null,"priority":95},{"id":96,"title":"Kings of the Wyld","series":"The Band","seriesNum":1.0,"author":"Nicholas Eames","pages":null,"audioHours":17.77,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":4,"yearCompleted":2025,"monthCompleted":5,"dateStarted":"2025-04-29","dateCompleted":"2025-05-02","format":"Audiobook","quote":null,"dateAdded":null,"priority":96},{"id":97,"title":"Rhythm of War","series":"The Stormlight Archive","seriesNum":4.0,"author":"Brandon Sanderson","pages":null,"audioHours":57.43,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":5,"yearCompleted":2025,"monthCompleted":5,"dateStarted":"2025-05-08","dateCompleted":"2025-05-30","format":"Audiobook","quote":null,"dateAdded":null,"priority":97},{"id":98,"title":"Dune","series":"Dune Saga","seriesNum":1.0,"author":"Frank Herbert","pages":688.0,"audioHours":0,"status":"Read","genre":"Sci-Fi","yearStarted":2025,"monthStarted":6,"yearCompleted":2025,"monthCompleted":6,"dateStarted":"2025-06-15","dateCompleted":"2025-06-30","format":"Physical","quote":null,"dateAdded":null,"priority":98},{"id":99,"title":"The Pilot","series":"The Last Horizon","seriesNum":4.0,"author":"Will Wight","pages":412.0,"audioHours":0,"status":"Read","genre":"Sci-Fi","yearStarted":2025,"monthStarted":7,"yearCompleted":2025,"monthCompleted":7,"dateStarted":"2025-07-01","dateCompleted":"2025-07-07","format":"Kindle","quote":null,"dateAdded":null,"priority":99},{"id":100,"title":"Wind and Truth","series":"The Stormlight Archive","seriesNum":5.0,"author":"Brandon Sanderson","pages":null,"audioHours":62.8,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":6,"yearCompleted":2025,"monthCompleted":7,"dateStarted":"2025-06-03","dateCompleted":"2025-07-16","format":"Audiobook","quote":null,"dateAdded":null,"priority":100},{"id":101,"title":"The Rage of Dragons","series":"The Burning","seriesNum":1.0,"author":"Evan Winter","pages":null,"audioHours":16.25,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":7,"yearCompleted":2025,"monthCompleted":7,"dateStarted":"2025-07-17","dateCompleted":"2025-07-21","format":"Audiobook","quote":null,"dateAdded":null,"priority":101},{"id":102,"title":"The Fires of Vengenace","series":"The Burning","seriesNum":2.0,"author":"Evan Winter","pages":null,"audioHours":15.53,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":7,"yearCompleted":2025,"monthCompleted":7,"dateStarted":"2025-07-21","dateCompleted":"2025-07-24","format":"Audiobook","quote":null,"dateAdded":null,"priority":102},{"id":103,"title":"The Failures","series":"Wanderlands","seriesNum":1.0,"author":"Benjamin Liar","pages":530.0,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":7,"yearCompleted":2025,"monthCompleted":8,"dateStarted":"2025-07-09","dateCompleted":"2025-08-02","format":"Physical","quote":"There are always those who are surrounded by magic and refuse to see it, thinking that purpose lies over the next hill and past the next stream (p. 376)","dateAdded":null,"priority":103},{"id":104,"title":"The Garden of Empire","series":"Pact and Pattern","seriesNum":2.0,"author":"J.T. Greathouse","pages":null,"audioHours":18.43,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":7,"yearCompleted":2025,"monthCompleted":8,"dateStarted":"2025-07-25","dateCompleted":"2025-08-05","format":"Audiobook","quote":null,"dateAdded":null,"priority":104},{"id":105,"title":"Empire of the Vampire","series":"Empire of the Vampire","seriesNum":1.0,"author":"Jay Kristoff","pages":734.0,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":8,"yearCompleted":2025,"monthCompleted":8,"dateStarted":"2025-08-02","dateCompleted":"2025-08-15","format":"Physical","quote":null,"dateAdded":null,"priority":105},{"id":106,"title":"Empire of the Damned","series":"Empire of the Vampire","seriesNum":2.0,"author":"Jay Kristoff","pages":356.5,"audioHours":15.78,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":8,"yearCompleted":2025,"monthCompleted":9,"dateStarted":"2025-08-15","dateCompleted":"2025-09-07","format":"Mixed","quote":null,"dateAdded":null,"priority":106},{"id":107,"title":"World Tree Online","series":"World Tree Online","seriesNum":1.0,"author":"E.A. Hooper","pages":null,"audioHours":14.45,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":9,"yearCompleted":2025,"monthCompleted":9,"dateStarted":"2025-09-23","dateCompleted":"2025-09-26","format":"Audiobook","quote":null,"dateAdded":null,"priority":107},{"id":108,"title":"Demon Lord","series":"World Tree Online","seriesNum":2.0,"author":"E.A. Hooper","pages":null,"audioHours":14.45,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":9,"yearCompleted":2025,"monthCompleted":10,"dateStarted":"2025-09-24","dateCompleted":"2025-10-02","format":"Audiobook","quote":null,"dateAdded":null,"priority":108},{"id":109,"title":"World Tree's End","series":"World Tree Online","seriesNum":3.0,"author":"E.A. Hooper","pages":null,"audioHours":14.48,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":10,"yearCompleted":2025,"monthCompleted":10,"dateStarted":"2025-10-02","dateCompleted":"2025-10-06","format":"Audiobook","quote":null,"dateAdded":null,"priority":109},{"id":110,"title":"Man's Search for Meaning","series":null,"seriesNum":null,"author":"Viktor E. Frankl","pages":null,"audioHours":5.72,"status":"Read","genre":"Autobiography, Philosophy","yearStarted":2025,"monthStarted":10,"yearCompleted":2025,"monthCompleted":10,"dateStarted":"2025-10-07","dateCompleted":"2025-10-15","format":"Audiobook","quote":"1. \"Man is that being that invented the gas chambers of Aushwitz. However, he is also that being who entered those gas champers upright with the lord's prayer or Shema Yisrael the on his lips.\" 2. \"The aim of psychiatry was the healing of the soul leaving to religion the salvation of the soul.\"  3. \"Logotherapy - use of existensial analysis to help patients resolve their emotional conflicts. Stimulated many therapists to look past a patients past or present problems to help them choose productive futures by making personal choices and taking responsibility for them.\"","dateAdded":null,"priority":110},{"id":111,"title":"He Who Fights With Monsters","series":"He Who Fights With Monsters","seriesNum":1.0,"author":"Shirtaloon, Travis Deverell","pages":null,"audioHours":28.93,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":10,"yearCompleted":2025,"monthCompleted":10,"dateStarted":"2025-10-14","dateCompleted":"2025-10-19","format":"Audiobook","quote":null,"dateAdded":null,"priority":111},{"id":112,"title":"He Who Fights With Monsters 2","series":"He Who Fights With Monsters","seriesNum":2.0,"author":"Shirtaloon, Travis Deverell","pages":null,"audioHours":22.02,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":10,"yearCompleted":2025,"monthCompleted":10,"dateStarted":"2025-10-19","dateCompleted":"2025-10-24","format":"Audiobook","quote":null,"dateAdded":null,"priority":112},{"id":113,"title":"He Who Fights With Monsters 3","series":"He Who Fights With Monsters","seriesNum":3.0,"author":"Shirtaloon, Travis Deverell","pages":null,"audioHours":24.65,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":10,"yearCompleted":2025,"monthCompleted":10,"dateStarted":"2025-10-24","dateCompleted":"2025-10-27","format":"Audiobook","quote":null,"dateAdded":null,"priority":113},{"id":114,"title":"He Who Fights With Monsters 4","series":"He Who Fights With Monsters","seriesNum":4.0,"author":"Shirtaloon, Travis Deverell","pages":null,"audioHours":22.33,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":10,"yearCompleted":2025,"monthCompleted":10,"dateStarted":"2025-10-27","dateCompleted":"2025-10-31","format":"Audiobook","quote":null,"dateAdded":null,"priority":114},{"id":115,"title":"He Who Fights With Monsters 5","series":"He Who Fights With Monsters","seriesNum":5.0,"author":"Shirtaloon, Travis Deverell","pages":null,"audioHours":20.08,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":10,"yearCompleted":2025,"monthCompleted":11,"dateStarted":"2025-10-31","dateCompleted":"2025-11-06","format":"Audiobook","quote":null,"dateAdded":null,"priority":115},{"id":116,"title":"He Who Fights With Monsters 6","series":"He Who Fights With Monsters","seriesNum":6.0,"author":"Shirtaloon, Travis Deverell","pages":null,"audioHours":15.82,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":11,"yearCompleted":2025,"monthCompleted":11,"dateStarted":"2025-11-06","dateCompleted":"2025-11-12","format":"Audiobook","quote":null,"dateAdded":null,"priority":116},{"id":117,"title":"He Who Fights With Monsters 7","series":"He Who Fights With Monsters","seriesNum":7.0,"author":"Shirtaloon, Travis Deverell","pages":null,"audioHours":18.65,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":11,"yearCompleted":2025,"monthCompleted":11,"dateStarted":"2025-11-12","dateCompleted":"2025-11-17","format":"Audiobook","quote":null,"dateAdded":null,"priority":117},{"id":118,"title":"Underlord","series":"Cradle","seriesNum":6.0,"author":"Will Wight","pages":null,"audioHours":10.13,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":11,"yearCompleted":2025,"monthCompleted":11,"dateStarted":"2025-11-17","dateCompleted":"2025-11-19","format":"Audiobook","quote":null,"dateAdded":null,"priority":118},{"id":119,"title":"Uncrowned","series":"Cradle","seriesNum":7.0,"author":"Will Wight","pages":null,"audioHours":9.53,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":11,"yearCompleted":2025,"monthCompleted":11,"dateStarted":"2025-11-19","dateCompleted":"2025-11-21","format":"Audiobook","quote":null,"dateAdded":null,"priority":119},{"id":120,"title":"Wintersteel","series":"Cradle","seriesNum":8.0,"author":"Will Wight","pages":null,"audioHours":14.65,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":11,"yearCompleted":2025,"monthCompleted":11,"dateStarted":"2025-11-21","dateCompleted":"2025-11-23","format":"Audiobook","quote":null,"dateAdded":null,"priority":120},{"id":121,"title":"Bloodline","series":"Cradle","seriesNum":9.0,"author":"Will Wight","pages":null,"audioHours":11.2,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":11,"yearCompleted":2025,"monthCompleted":11,"dateStarted":"2025-11-23","dateCompleted":"2025-11-25","format":"Audiobook","quote":null,"dateAdded":null,"priority":121},{"id":122,"title":"Reaper","series":"Cradle","seriesNum":10.0,"author":"Will Wight","pages":null,"audioHours":13.12,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":11,"yearCompleted":2025,"monthCompleted":11,"dateStarted":"2025-11-25","dateCompleted":"2025-11-26","format":"Audiobook","quote":null,"dateAdded":null,"priority":122},{"id":123,"title":"Dreadgod","series":"Cradle","seriesNum":11.0,"author":"Will Wight","pages":null,"audioHours":12.47,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":11,"yearCompleted":2025,"monthCompleted":12,"dateStarted":"2025-11-26","dateCompleted":"2025-12-01","format":"Audiobook","quote":null,"dateAdded":null,"priority":123},{"id":124,"title":"Waybound","series":"Cradle","seriesNum":12.0,"author":"Will Wight","pages":null,"audioHours":16.22,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":12,"yearCompleted":2025,"monthCompleted":12,"dateStarted":"2025-12-01","dateCompleted":"2025-12-03","format":"Audiobook","quote":null,"dateAdded":null,"priority":124},{"id":125,"title":"Threshold","series":"Cradle","seriesNum":12.5,"author":"Will Wight","pages":null,"audioHours":8.58,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":12,"yearCompleted":2025,"monthCompleted":12,"dateStarted":"2025-12-03","dateCompleted":"2025-12-03","format":"Audiobook","quote":null,"dateAdded":null,"priority":125},{"id":126,"title":"House of Blades","series":"Traveler's Gate Trilogy","seriesNum":1.0,"author":"Will Wight","pages":null,"audioHours":11.5,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":12,"yearCompleted":2025,"monthCompleted":12,"dateStarted":"2025-12-03","dateCompleted":"2025-12-07","format":"Audiobook","quote":null,"dateAdded":null,"priority":126},{"id":127,"title":"Crimson Vault","series":"Traveler's Gate Trilogy","seriesNum":2.0,"author":"Will Wight","pages":null,"audioHours":14.17,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":12,"yearCompleted":2025,"monthCompleted":12,"dateStarted":"2025-12-07","dateCompleted":"2025-12-09","format":"Audiobook","quote":null,"dateAdded":null,"priority":127},{"id":128,"title":"City of Light","series":"Traveler's Gate Trilogy","seriesNum":3.0,"author":"Will Wight","pages":null,"audioHours":14.12,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":12,"yearCompleted":2025,"monthCompleted":12,"dateStarted":"2025-12-09","dateCompleted":"2025-12-15","format":"Audiobook","quote":null,"dateAdded":null,"priority":128},{"id":129,"title":"The Hobbit","series":null,"seriesNum":null,"author":"J.R.R Tolkien","pages":null,"audioHours":10.42,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":12,"yearCompleted":2025,"monthCompleted":12,"dateStarted":"2025-12-17","dateCompleted":"2025-12-26","format":"Audiobook","quote":null,"dateAdded":null,"priority":129},{"id":130,"title":"1% Lifesteal Book One","series":"1% Lifesteal","seriesNum":1.0,"author":"Robert Blaise","pages":604.0,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":12,"yearCompleted":2026,"monthCompleted":1,"dateStarted":"2025-12-30","dateCompleted":"2026-01-02","format":"Kindle","quote":null,"dateAdded":null,"priority":130},{"id":131,"title":"Pit Fighter","series":"Victor of Tucson","seriesNum":1.0,"author":"Plum Parrot","pages":333.0,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2026,"monthStarted":1,"yearCompleted":2026,"monthCompleted":1,"dateStarted":"2026-01-04","dateCompleted":"2026-01-06","format":"Kindle","quote":null,"dateAdded":null,"priority":131},{"id":132,"title":"Dungeon Delver","series":"Victor of Tucson","seriesNum":2.0,"author":"Plum Parrot","pages":null,"audioHours":13.7,"status":"Read","genre":"Fantasy","yearStarted":2026,"monthStarted":1,"yearCompleted":2026,"monthCompleted":1,"dateStarted":"2026-01-06","dateCompleted":"2026-01-07","format":"Audiobook","quote":null,"dateAdded":null,"priority":132},{"id":133,"title":"Spirit Hunter","series":"Victor of Tucson","seriesNum":3.0,"author":"Plum Parrot","pages":181.5,"audioHours":7.56,"status":"Read","genre":"Fantasy","yearStarted":2026,"monthStarted":1,"yearCompleted":2026,"monthCompleted":1,"dateStarted":"2026-01-08","dateCompleted":"2026-01-12","format":"Mixed","quote":null,"dateAdded":null,"priority":133},{"id":134,"title":"Titan Blood","series":"Victor of Tucson","seriesNum":4.0,"author":"Plum Parrot","pages":209.5,"audioHours":8.7,"status":"Read","genre":"Fantasy","yearStarted":2026,"monthStarted":1,"yearCompleted":2026,"monthCompleted":1,"dateStarted":"2026-01-13","dateCompleted":"2026-01-16","format":"Mixed","quote":null,"dateAdded":null,"priority":134},{"id":135,"title":"Battlemaster","series":"Victor of Tucson","seriesNum":5.0,"author":"Plum Parrot","pages":null,"audioHours":15.32,"status":"Read","genre":"Fantasy","yearStarted":2026,"monthStarted":1,"yearCompleted":2026,"monthCompleted":1,"dateStarted":"2026-01-17","dateCompleted":"2026-01-19","format":"Audiobook","quote":null,"dateAdded":null,"priority":135},{"id":136,"title":"Magma Heart","series":"Victor of Tucson","seriesNum":6.0,"author":"Plum Parrot","pages":null,"audioHours":21.48,"status":"Read","genre":"Fantasy","yearStarted":2026,"monthStarted":1,"yearCompleted":2026,"monthCompleted":1,"dateStarted":"2026-01-19","dateCompleted":"2026-01-22","format":"Audiobook","quote":null,"dateAdded":null,"priority":136},{"id":137,"title":"Empire of the Dawn","series":"Empire of the Vampire","seriesNum":3.0,"author":"Jay Kristoff","pages":765.0,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2025,"monthStarted":11,"yearCompleted":2026,"monthCompleted":2,"dateStarted":"2025-11-04","dateCompleted":"2026-02-02","format":"Kindle","quote":null,"dateAdded":null,"priority":137},{"id":138,"title":"The Strength of the Few","series":"Hierarchy","seriesNum":2.0,"author":"James Islington","pages":368.0,"audioHours":15.57,"status":"Read","genre":"Fantasy","yearStarted":2026,"monthStarted":2,"yearCompleted":2026,"monthCompleted":2,"dateStarted":"2026-02-03","dateCompleted":"2026-02-20","format":"Mixed","quote":null,"dateAdded":null,"priority":138},{"id":139,"title":"Depths of Vanalf","series":"Grimnir Chronicles","seriesNum":1.0,"author":"Brady Hunsaker","pages":446.0,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2026,"monthStarted":4,"yearCompleted":2026,"monthCompleted":4,"dateStarted":"2026-04-11","dateCompleted":"2026-04-15","format":"Kindle","quote":null,"dateAdded":null,"priority":139},{"id":140,"title":"Shadows of Kelig","series":"Grimnir Chronicles","seriesNum":2.0,"author":"Brady Hunsaker","pages":409.0,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2026,"monthStarted":4,"yearCompleted":2026,"monthCompleted":4,"dateStarted":"2026-04-16","dateCompleted":"2026-04-21","format":"Kindle","quote":null,"dateAdded":null,"priority":140},{"id":141,"title":"Dungeon Crawler Carl","series":"Dungeon Crawler Carl","seriesNum":1.0,"author":"Matt Dinniman","pages":446.0,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2026,"monthStarted":4,"yearCompleted":2026,"monthCompleted":4,"dateStarted":"2026-04-22","dateCompleted":"2026-04-27","format":"Kindle","quote":null,"dateAdded":null,"priority":141},{"id":142,"title":"Carl's Doomsday Scenario","series":"Dungeon Crawler Carl","seriesNum":2.0,"author":"Matt Dinniman","pages":386.0,"audioHours":0,"status":"Read","genre":"Fantasy","yearStarted":2026,"monthStarted":4,"yearCompleted":2026,"monthCompleted":5,"dateStarted":"2026-04-27","dateCompleted":"2026-05-03","format":"Kindle","quote":null,"dateAdded":null,"priority":142},{"id":143,"title":"The Dungeon Anarchist's Cookbook","series":"Dungeon Crawler Carl","seriesNum":3.0,"author":"Matt Dinniman","pages":357.78,"audioHours":5.58,"status":"Read","genre":"Sci-Fantasy","yearStarted":2026,"monthStarted":5,"yearCompleted":2026,"monthCompleted":5,"dateStarted":"2026-05-03","dateCompleted":"2026-05-12","format":"Mixed","quote":null,"dateAdded":null,"priority":143},{"id":144,"title":"The Gate of the Feral Gods","series":"Dungeon Crawler Carl","seriesNum":4.0,"author":"Matt Dinniman","pages":586.0,"audioHours":0,"status":"Read","genre":"Sci-Fantasy","yearStarted":2026,"monthStarted":5,"yearCompleted":2026,"monthCompleted":5,"dateStarted":"2026-05-12","dateCompleted":"2026-05-18","format":"Kindle","quote":null,"dateAdded":null,"priority":144},{"id":145,"title":"The Butcher's Masquerade","series":"Dungeon Crawler Carl","seriesNum":5.0,"author":"Matt Dinniman","pages":109.8,"audioHours":20.02,"status":"Read","genre":"Sci-Fantasy","yearStarted":2026,"monthStarted":5,"yearCompleted":2026,"monthCompleted":5,"dateStarted":"2026-05-18","dateCompleted":"2026-05-23","format":"Mixed","quote":null,"dateAdded":null,"priority":145},{"id":146,"title":"Of Empires and Dust","series":"The Bound and the Broken","seriesNum":4.0,"author":"Ryan Cahill","pages":null,"audioHours":52.75,"status":"Read","genre":"Fantasy","yearStarted":2026,"monthStarted":1,"yearCompleted":2026,"monthCompleted":6,"dateStarted":"2026-01-01","dateCompleted":"2026-06-07","format":"Audiobook","quote":null,"dateAdded":null,"priority":146},{"id":147,"title":"Wintersteel","series":"Cradle","seriesNum":8.0,"author":"Will Wight","pages":null,"audioHours":14.65,"status":"Read","genre":"Fantasy","yearStarted":2026,"monthStarted":6,"yearCompleted":2026,"monthCompleted":6,"dateStarted":"2026-06-10","dateCompleted":"2026-06-13","format":"Audiobook","quote":null,"dateAdded":null,"priority":147},{"id":148,"title":"Bloodline","series":"Cradle","seriesNum":9.0,"author":"Will Wight","pages":null,"audioHours":11.2,"status":"Read","genre":"Fantasy","yearStarted":2026,"monthStarted":6,"yearCompleted":2026,"monthCompleted":6,"dateStarted":"2026-06-13","dateCompleted":"2026-06-15","format":"Audiobook","quote":null,"dateAdded":null,"priority":148},{"id":149,"title":"Reaper","series":"Cradle","seriesNum":10.0,"author":"Will Wight","pages":null,"audioHours":13.12,"status":"Read","genre":"Fantasy","yearStarted":2026,"monthStarted":6,"yearCompleted":2026,"monthCompleted":6,"dateStarted":"2026-06-15","dateCompleted":"2026-06-17","format":"Audiobook","quote":null,"dateAdded":null,"priority":149},{"id":150,"title":"Dreadgod","series":"Cradle","seriesNum":11.0,"author":"Will Wight","pages":null,"audioHours":12.47,"status":"Read","genre":"Fantasy","yearStarted":2026,"monthStarted":6,"yearCompleted":2026,"monthCompleted":6,"dateStarted":"2026-06-17","dateCompleted":"2026-06-20","format":"Audiobook","quote":null,"dateAdded":null,"priority":150},{"id":151,"title":"Waybound","series":"Cradle","seriesNum":12.0,"author":"Will Wight","pages":null,"audioHours":16.22,"status":"Read","genre":"Fantasy","yearStarted":2026,"monthStarted":6,"yearCompleted":2026,"monthCompleted":6,"dateStarted":"2026-06-20","dateCompleted":"2026-06-24","format":"Audiobook","quote":null,"dateAdded":null,"priority":151},{"id":152,"title":"The Eye of the Bedlam Bride","series":"Dungeon Crawler Carl","seriesNum":6.0,"author":"Matt Dinniman","pages":69.4,"audioHours":24.09,"status":"Read","genre":"Sci-Fantasy","yearStarted":2026,"monthStarted":6,"yearCompleted":2026,"monthCompleted":7,"dateStarted":"2026-06-25","dateCompleted":"2026-07-08","format":"Mixed","quote":null,"dateAdded":null,"priority":152},{"id":153,"title":"The Spear Cuts Through Water","series":null,"seriesNum":null,"author":"Simon Jimenez","pages":null,"audioHours":0,"status":"DNF","genre":"Fantasy","yearStarted":2025,"monthStarted":2,"yearCompleted":null,"monthCompleted":12,"dateStarted":"2025-02-01","dateCompleted":null,"format":"Physical","quote":null,"dateAdded":null,"priority":153},{"id":154,"title":"The Screwtape Letters","series":null,"seriesNum":null,"author":"C.S. Lewis","pages":118.0,"audioHours":0,"status":"Read","genre":"Christian","yearStarted":2025,"monthStarted":3,"yearCompleted":null,"monthCompleted":12,"dateStarted":"2025-03-01","dateCompleted":null,"format":"Physical","quote":null,"dateAdded":null,"priority":154},{"id":155,"title":"The Once and Future King","series":null,"seriesNum":null,"author":"T.H. White","pages":639.0,"audioHours":0,"status":"DNF","genre":"Fantasy","yearStarted":2025,"monthStarted":4,"yearCompleted":null,"monthCompleted":null,"dateStarted":"2025-04-29","dateCompleted":null,"format":"Physical","quote":null,"dateAdded":null,"priority":155},{"id":156,"title":"The Case for Christ","series":null,"seriesNum":null,"author":"Lee Strobel","pages":null,"audioHours":0,"status":"In Progress","genre":"Christian","yearStarted":2025,"monthStarted":9,"yearCompleted":null,"monthCompleted":null,"dateStarted":"2025-09-20","dateCompleted":null,"format":"Physical","quote":null,"dateAdded":null,"priority":156},{"id":157,"title":"Titan's Nest","series":"Titan's Nest Saga","seriesNum":1.0,"author":"T.D. Orel","pages":535.0,"audioHours":0,"status":"In Progress","genre":"Fantasy","yearStarted":2026,"monthStarted":6,"yearCompleted":null,"monthCompleted":null,"dateStarted":"2026-06-07","dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":157},{"id":158,"title":"This Inevitable Ruin","series":"Dungeon Crawler Carl","seriesNum":7.0,"author":"Matt Dinniman","pages":null,"audioHours":28.67,"status":"Read","genre":"Sci-Fantasy","yearStarted":2026,"monthStarted":7,"yearCompleted":2026,"monthCompleted":7,"dateStarted":"2026-07-08","dateCompleted":"2026-07-19","format":"Audiobook","quote":null,"dateAdded":null,"priority":158},{"id":159,"title":"Dune Messiah","series":"Dune Saga","seriesNum":2.0,"author":"Frank Herbert","pages":288.0,"audioHours":0,"status":"TBR","genre":"Sci-Fi","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Kindle","quote":null,"dateAdded":null,"priority":159},{"id":160,"title":"The Shadow of the Gods","series":"The Bloodsworn Saga","seriesNum":1.0,"author":"John Gwynne","pages":478.0,"audioHours":0,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":"Physical","quote":null,"dateAdded":null,"priority":160},{"id":161,"title":"Lonesome Dove","series":"Lonesome Dove","seriesNum":1.0,"author":"Larry McMurtry","pages":null,"audioHours":null,"status":"TBR","genre":"Western","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":161},{"id":162,"title":"Tainted Cup","series":"Shadow of the Leviathan","seriesNum":1.0,"author":"Robert Jackson Bennett","pages":410.0,"audioHours":null,"status":"TBR","genre":"Fantasy, Mystery","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":162},{"id":163,"title":"This Present Darkness","series":null,"seriesNum":null,"author":"Frank Peretti","pages":null,"audioHours":null,"status":"TBR","genre":"Christian","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":"2026-03-19","priority":163},{"id":164,"title":"A Parade of Horribles","series":"Dungeon Crawler Carl","seriesNum":8.0,"author":"Matt Dinniman","pages":766.0,"audioHours":20.45,"status":"TBR","genre":"Sci-Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":164},{"id":165,"title":"Jonathan Strange & Mr. Norrell","series":null,"seriesNum":null,"author":"Susanna Clark","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":"2025-08-25","priority":165},{"id":166,"title":"Lions of Al-Rassan","series":null,"seriesNum":null,"author":"Guy Gavriel Kay","pages":528.0,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":"2025-08-25","priority":166},{"id":167,"title":"You Are the Team","series":null,"seriesNum":null,"author":"Michael G. Rogers","pages":102.0,"audioHours":null,"status":"TBR","genre":"Professional Development","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":"2025-10-07","priority":167},{"id":168,"title":"Between Two Fires","series":null,"seriesNum":null,"author":"Christopher Buehlman","pages":448.0,"audioHours":null,"status":"TBR","genre":null,"yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":168},{"id":169,"title":"Buffalo Hunter Hunter","series":null,"seriesNum":null,"author":"Stephen Graham Jones","pages":448.0,"audioHours":null,"status":"TBR","genre":null,"yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":169},{"id":170,"title":"Piranesi","series":null,"seriesNum":null,"author":"Susanna Clark","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":170},{"id":171,"title":"The Shadow of What Was Lost","series":"Licaniius Trilogy","seriesNum":null,"author":"James Islington","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":171},{"id":172,"title":"Mistborn","series":"Mistborn","seriesNum":1.0,"author":"Brandon Sanderson","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":172},{"id":173,"title":"The Silmarillion","series":null,"seriesNum":null,"author":"J.R.R Tolkien","pages":null,"audioHours":19.4,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":173},{"id":174,"title":"A Wizard of Earthsea","series":"The Earthsea Cycle","seriesNum":null,"author":"Ursula K. Le Guin","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":174},{"id":175,"title":"The Lies of Locke Lamora","series":"Gentleman Bastards","seriesNum":null,"author":"Scott Lynch","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":175},{"id":176,"title":"A Darker Shade of Magic","series":"Shades of Magic","seriesNum":null,"author":"V.E. Schwab","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":176},{"id":177,"title":"The Martian","series":null,"seriesNum":null,"author":"Andy Weir","pages":null,"audioHours":null,"status":"TBR","genre":"Sci-Fi","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":"2026-03-27","priority":177},{"id":178,"title":"Hyperion","series":null,"seriesNum":null,"author":"Dan Simmons","pages":null,"audioHours":null,"status":"TBR","genre":"Sci-Fi","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":178},{"id":179,"title":"The Dragonbone Chair","series":"Memory, Sorrow, and Thorn","seriesNum":1.0,"author":"Tad Williams","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":179},{"id":180,"title":"Follow Me","series":null,"seriesNum":null,"author":"David Platt","pages":246.0,"audioHours":7.38,"status":"TBR","genre":"Christian","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":"2025-11-07","priority":180},{"id":181,"title":"Forging Divinity","series":"Broken Mirrors","seriesNum":null,"author":"Andrew Rowe","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":181},{"id":182,"title":"Diamantine","series":"Weapons and Wielders","seriesNum":null,"author":"Andrew Rowe","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":182},{"id":183,"title":"The Last Wish","series":"The Witcher","seriesNum":null,"author":"Andrzej Sapkowski","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":183},{"id":184,"title":"Sword of Destiny","series":"The Witcher","seriesNum":null,"author":"Andrzej Sapkowski","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":184},{"id":185,"title":"Season of Storms*","series":"The Witcher","seriesNum":null,"author":"Andrzej Sapkowski","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":185},{"id":186,"title":"Blood of Elves","series":"The Witcher","seriesNum":null,"author":"Andrzej Sapkowski","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":186},{"id":187,"title":"Time of Contempt","series":"The Witcher","seriesNum":null,"author":"Andrzej Sapkowski","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":187},{"id":188,"title":"Baptism of Fire","series":"The Witcher","seriesNum":null,"author":"Andrzej Sapkowski","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":188},{"id":189,"title":"The Tower of the Swallow","series":"The Witcher","seriesNum":null,"author":"Andrzej Sapkowski","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":189},{"id":190,"title":"The Lady of the Lake","series":"The Witcher","seriesNum":null,"author":"Andrzej Sapkowski","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":190},{"id":191,"title":"Crimson Queen","series":"Raven's Shadow","seriesNum":3.0,"author":"Anthony Ryan","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":191},{"id":192,"title":"Well of Ascension","series":"Mistborn","seriesNum":2.0,"author":"Brandon Sanderson","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":192},{"id":193,"title":"Hero of Ages","series":"Mistborn","seriesNum":3.0,"author":"Brandon Sanderson","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":193},{"id":194,"title":"The Broken Eye","series":"Lightbringer","seriesNum":null,"author":"Brent Weeks","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":194},{"id":195,"title":"A Mark of Kings","series":"N/A","seriesNum":null,"author":"Bryce O'Connor, Luke Chmilenko","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":195},{"id":196,"title":"Sorrows of Starlight","series":"The Adept Archives","seriesNum":null,"author":"Darren Hultberg Jr.","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":196},{"id":197,"title":"The Belgariad","series":"The Belgariad","seriesNum":null,"author":"David Eddings","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":197},{"id":198,"title":"Demon Beast","series":"Path of the Thunderbird","seriesNum":3.0,"author":"Eden Hudson","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":198},{"id":199,"title":"Harry Potter and the Methods of Rationality","series":null,"seriesNum":null,"author":"Eliezer Yudkowsky","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":199},{"id":200,"title":"The Gutter Prayer","series":"The Black Iron Legacy","seriesNum":null,"author":"Gareth Hanrahan","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":200},{"id":201,"title":"The Cursed Child","series":"Harry Potter","seriesNum":null,"author":"J.K. Rowling","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":201},{"id":202,"title":"The Blade Itself","series":"The First Law","seriesNum":null,"author":"Joe Abercrombie","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":202},{"id":203,"title":"Free the Darkness","series":"King's Dark Tidings","seriesNum":null,"author":"Kel Kade","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":203},{"id":204,"title":"Prince of Thorns","series":"Broken Empire World","seriesNum":null,"author":"Mark Lawrence","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":204},{"id":205,"title":"Red Sister","series":"Book of the Ancestor","seriesNum":null,"author":"Mark Lawrence","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":205},{"id":206,"title":"The Final Redemption","series":"Mageborn","seriesNum":null,"author":"Michael G. Manning","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":206},{"id":207,"title":"Age of Swords","series":"The Legends of the First Empire","seriesNum":null,"author":"Michael J. Sullivan","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":207},{"id":208,"title":"Charmed","series":"Lion's Quest","seriesNum":null,"author":"Michael-Scott Earle","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":208},{"id":209,"title":"Legendary","series":"Lion's Quest","seriesNum":null,"author":"Michael-Scott Earle","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":209},{"id":210,"title":"Ultimate","series":"Lion's Quest","seriesNum":null,"author":"Michael-Scott Earle","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":210},{"id":211,"title":"The Aching God","series":"Iconoclasts","seriesNum":null,"author":"Mike Shel","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":211},{"id":212,"title":"Speaker of the Dead","series":"The Ender Quintet","seriesNum":2.0,"author":"Orson Scott Card","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":212},{"id":213,"title":"The Lost Gate","series":"The Mithermages Series","seriesNum":null,"author":"Orson Scott Card","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":213},{"id":214,"title":"Seventh Son","series":"Alvin Maker novels","seriesNum":null,"author":"Orson Scott Card","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":214},{"id":215,"title":"The Name of the Wind","series":"The Kingkiller Chronicle","seriesNum":null,"author":"Patrick Rothfuss","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":215},{"id":216,"title":"Steel Crow Saga","series":"Steel Crow Saga","seriesNum":null,"author":"Paul Kreuger","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":216},{"id":217,"title":"Battle Mage: Aquila","series":"The Souls of Wrath","seriesNum":null,"author":"Peter Flannery","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":217},{"id":218,"title":"Northern Lights","series":"His Dark Materials","seriesNum":null,"author":"Philip Pullman","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":218},{"id":219,"title":"The Poppy War","series":"The Poppy War Series","seriesNum":null,"author":"R.F. Kuang","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":219},{"id":220,"title":"Assassin's Apprentice","series":"The Farseer Trilogy","seriesNum":null,"author":"Robin Hobb","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":220},{"id":221,"title":"Seven Blades in Black","series":"The Grave Empires","seriesNum":null,"author":"Sam Sykes","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":221},{"id":222,"title":"Inda","series":"Inda Series","seriesNum":null,"author":"Sherwood Smith","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":222},{"id":223,"title":"Gardens of the Moon","series":"Malazan Book of the Fallen","seriesNum":null,"author":"Steven Erikson","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":223},{"id":224,"title":"Of Kings and Killers","series":"The Elder Empire: Sea","seriesNum":null,"author":"Will Wight","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":224},{"id":225,"title":"Of Shadow and Sea","series":"The Elder Empire: Shadow","seriesNum":null,"author":"Will Wight","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":225},{"id":226,"title":"Of Darkness and Dawn","series":"The Elder Empire: Shadow","seriesNum":null,"author":"Will Wight","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":226},{"id":227,"title":"Of Killers and Kings","series":"The Elder Empire: Shadow","seriesNum":null,"author":"Will Wight","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":227},{"id":228,"title":"Jade City","series":"Green Bone Saga","seriesNum":null,"author":"Fonda Lee","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":228},{"id":229,"title":"Bastion","series":"The Immortal Great Souls","seriesNum":null,"author":"Phil Tucker","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":229},{"id":230,"title":"The Blacktongue Thief","series":"Blacktongue","seriesNum":null,"author":"Christopher Buehlman","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":230},{"id":231,"title":"Blood Over Bright Haven","series":null,"seriesNum":null,"author":"M.L. Wang","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":231},{"id":232,"title":"The Desert Spear","series":"The Demon Cycle Series","seriesNum":null,"author":"Peter V. Brett","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":232},{"id":233,"title":"The Pattern of the World","series":"Pact and Pattern","seriesNum":3.0,"author":"J.T. Greathouse","pages":414.0,"audioHours":15.88,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":233},{"id":234,"title":"Iron Gold","series":"Red Rising Saga","seriesNum":4.0,"author":"Pierce Brown","pages":null,"audioHours":null,"status":"TBR","genre":"Sci-Fi","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":234},{"id":235,"title":"Dark Age","series":"Red Rising Saga","seriesNum":5.0,"author":"Pierce Brown","pages":null,"audioHours":null,"status":"TBR","genre":"Sci-Fi","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":235},{"id":236,"title":"Demon in White","series":"Sun Eater Series","seriesNum":3.0,"author":"Christopher Ruocchio","pages":784.0,"audioHours":null,"status":"TBR","genre":"Sci-Fi","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":236},{"id":237,"title":"Ready Player One","series":"Ready Player One","seriesNum":null,"author":"Ernest Cline","pages":null,"audioHours":null,"status":"TBR","genre":"Sci-Fi","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":237},{"id":238,"title":"Ready Player Two","series":"Ready Player One","seriesNum":null,"author":"Ernest Cline","pages":null,"audioHours":null,"status":"TBR","genre":"Sci-Fi","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":238},{"id":239,"title":"How to be Somebody","series":null,"seriesNum":null,"author":"Martin Mendez","pages":null,"audioHours":null,"status":"TBR","genre":"Christian","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":239},{"id":240,"title":"Evidence that Demands a Verdict","series":null,"seriesNum":null,"author":"Josh McDowell","pages":null,"audioHours":null,"status":"TBR","genre":"Christian","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":240},{"id":241,"title":"The Blood that Burns the Winter Snow","series":"The Bound and the Broken Novellas","seriesNum":3.75,"author":"Ryan Cahill","pages":28.0,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":"2025-07-10","priority":241},{"id":242,"title":"Soulless","series":"Parasol Protectorate","seriesNum":null,"author":"Gail Carriger","pages":404.0,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":242},{"id":243,"title":"Sabriel","series":"Abhorsen","seriesNum":null,"author":"Garth Nix","pages":496.0,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":243},{"id":244,"title":"City of Stairs","series":"The Divine Cities","seriesNum":null,"author":"Robert Jackson Bennett","pages":466.0,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":244},{"id":245,"title":"The Physiognomy","series":"The Well-Built City Trilogy","seriesNum":1.0,"author":"Jeffrey Ford","pages":null,"audioHours":null,"status":"TBR","genre":"Sci-Fi","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":245},{"id":246,"title":"Children of Dune","series":"Dune Saga","seriesNum":3.0,"author":"Frank Herbert","pages":496.0,"audioHours":null,"status":"TBR","genre":"Sci-Fi","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":246},{"id":247,"title":"The Devils","series":"The Devils","seriesNum":1.0,"author":"Joe Abercrombie","pages":553.0,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":"2025-07-01","priority":247},{"id":248,"title":"Jhereg","series":"Taltos Series","seriesNum":1.0,"author":"Steven Brust","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":"2025-07-01","priority":248},{"id":249,"title":"Gunmetal Gods","series":"Gunmetal Gods Saga","seriesNum":1.0,"author":"Zamil Akhtar","pages":506.0,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":"2025-07-08","priority":249},{"id":250,"title":"The Bone Ships","series":"The Tide Child Trilogy","seriesNum":1.0,"author":"R.J. barker","pages":471.0,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":"2025-07-08","priority":250},{"id":251,"title":"Magician","series":"The Riftwar Saga","seriesNum":1.0,"author":"Raymond E. Feist","pages":681.0,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":"2025-07-08","priority":251},{"id":252,"title":"Nine Princes in Amber","series":"Chronicles of Amber","seriesNum":1.0,"author":"Robert Zelazny","pages":175.0,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":"2025-07-08","priority":252},{"id":253,"title":"The Eternal Champion","series":"Eternal Champion Series","seriesNum":1.0,"author":"Michael Moorcock","pages":240.0,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":"2025-07-08","priority":253},{"id":254,"title":"Elric of Melnibone","series":"The Elric Saga","seriesNum":1.0,"author":"Michael Moorcock","pages":181.0,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":"2025-07-08","priority":254},{"id":255,"title":"The Fifth Season","series":"The Broken Earth Trilogy","seriesNum":1.0,"author":"N.K. Jemisin","pages":466.0,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":"2025-07-08","priority":255},{"id":256,"title":"Till We Have Faces","series":null,"seriesNum":null,"author":"C.S. Lewis","pages":368.0,"audioHours":null,"status":"TBR","genre":"Christian","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":"2025-07-13","priority":256},{"id":257,"title":"Never Die","series":"Mortal Techniques","seriesNum":1.0,"author":"Rob J. Hayes","pages":346.0,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":"2025-07-16","priority":257},{"id":258,"title":"Nevernight","series":"Nevernight Chronicles","seriesNum":1.0,"author":"Jay Kristoff","pages":464.0,"audioHours":20.18,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":"2025-08-05","priority":258},{"id":259,"title":"The Bright Sword","series":null,"seriesNum":null,"author":"Lev Grossman","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":"2025-08-25","priority":259},{"id":260,"title":"Mere Christianity","series":null,"seriesNum":null,"author":"C.S. Lewis","pages":227.0,"audioHours":null,"status":"TBR","genre":"Christian","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":"2025-09-15","priority":260},{"id":261,"title":"I Don't Have Enough Faith to be an Atheist","series":null,"seriesNum":null,"author":"Norman L. Geisler, Frank Turek","pages":448.0,"audioHours":null,"status":"TBR","genre":"Christian","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":"2025-09-19","priority":261},{"id":262,"title":"The Curse of Hurlig Ridge: 1st Dive","series":"World Tree Online - M.A. Carlson","seriesNum":1.0,"author":"M. A. Carlson","pages":739.0,"audioHours":21.87,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":"2025-10-09","priority":262},{"id":263,"title":"Marek of the Mists","series":"Sword of the Moon Maiden Saga","seriesNum":null,"author":"Corey E. King","pages":264.0,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":"2025-10-20","priority":263},{"id":264,"title":"Scythe","series":"Arc of a Scythe","seriesNum":1.0,"author":"Neal Shusterman","pages":464.0,"audioHours":null,"status":"TBR","genre":"Sci-Fi","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":"2025-10-20","priority":264},{"id":265,"title":"Multiply","series":null,"seriesNum":null,"author":"Francis Chan","pages":336.0,"audioHours":8.58,"status":"TBR","genre":"Christian","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":"2025-11-07","priority":265},{"id":266,"title":"Ironbound","series":null,"seriesNum":1.0,"author":"Andrew Givler","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":"2025-12-01","priority":266},{"id":267,"title":"A Forest of Vanity and Valour","series":"The Levanthria Series","seriesNum":1.0,"author":"A.P. Beswick","pages":250.0,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":"2025-12-17","priority":267},{"id":268,"title":"The Wizard Slayer","series":null,"seriesNum":null,"author":"Franklin Roberts","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":"2025-12-23","priority":268},{"id":269,"title":"Beware of Chicken","series":null,"seriesNum":null,"author":null,"pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":"2026-01-02","priority":269},{"id":270,"title":"Magician: Apprentice","series":"The Riftwar Saga","seriesNum":1.0,"author":"Raymond E. Feist","pages":509.0,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":"2026-01-02","priority":270},{"id":271,"title":"Mage Tank","series":"Mage Tank","seriesNum":1.0,"author":null,"pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":271},{"id":272,"title":"The Forgetting Moon","series":null,"seriesNum":null,"author":null,"pages":null,"audioHours":null,"status":"TBR","genre":null,"yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":272},{"id":273,"title":"A Stage Set For Villians","series":null,"seriesNum":null,"author":"Shannon J. Spann","pages":null,"audioHours":null,"status":"TBR","genre":null,"yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":"2026-02-05","priority":273},{"id":274,"title":"The Compound Effect","series":null,"seriesNum":null,"author":"Darren Hardy","pages":null,"audioHours":null,"status":"TBR","genre":"Professional Development","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":274},{"id":275,"title":"The Power of Now","series":null,"seriesNum":null,"author":null,"pages":null,"audioHours":null,"status":"TBR","genre":"Professional Development","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":275},{"id":276,"title":"Empty Your Backpack","series":null,"seriesNum":null,"author":"Sam Demma","pages":null,"audioHours":null,"status":"TBR","genre":"Professional Development","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":276},{"id":277,"title":"The Justice of One","series":"Hierarchy","seriesNum":3.0,"author":"James Islington","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":277},{"id":278,"title":"Anji Kills a King","series":null,"seriesNum":null,"author":null,"pages":null,"audioHours":null,"status":"TBR","genre":null,"yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":278},{"id":279,"title":"The Fall","series":"The Seventh Tower","seriesNum":null,"author":"Garth Nix","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":279},{"id":280,"title":"Castle","series":"The Seventh Tower","seriesNum":null,"author":"Garth Nix","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":280},{"id":281,"title":"Aenir","series":"The Seventh Tower","seriesNum":null,"author":"Garth Nix","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":281},{"id":282,"title":"Above the Veil","series":"The Seventh Tower","seriesNum":null,"author":"Garth Nix","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":282},{"id":283,"title":"Into Battle","series":"The Seventh Tower","seriesNum":null,"author":"Garth Nix","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":283},{"id":284,"title":"The Violet Keystone","series":"The Seventh Tower","seriesNum":null,"author":"Garth Nix","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":284},{"id":285,"title":"Undefeated","series":"Lion's Quest","seriesNum":null,"author":"Michael-Scott Earle","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":285},{"id":286,"title":"Dual Wield","series":"Lion's Quest","seriesNum":null,"author":"Michael-Scott Earle","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":286},{"id":287,"title":"Trinity","series":"Lion's Quest","seriesNum":null,"author":"Michael-Scott Earle","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":287},{"id":288,"title":"Book 1","series":"Space Knight","seriesNum":null,"author":"Michael-Scott Earle","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":288},{"id":289,"title":"Book 2","series":"Space Knight","seriesNum":null,"author":"Michael-Scott Earle","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":289},{"id":290,"title":"Book 3","series":"Space Knight","seriesNum":null,"author":"Michael-Scott Earle","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":290},{"id":291,"title":"Book 4","series":"Space Knight","seriesNum":null,"author":"Michael-Scott Earle","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":291},{"id":292,"title":"Book 5","series":"Space Knight","seriesNum":null,"author":"Michael-Scott Earle","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":292},{"id":293,"title":"Book 6","series":"Space Knight","seriesNum":null,"author":"Michael-Scott Earle","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":293},{"id":294,"title":"Ender's Game","series":"The Ender Quintet","seriesNum":1.0,"author":"Orson Scott Card","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":294},{"id":295,"title":"Battle Mage","series":"The Souls of Wrath","seriesNum":null,"author":"Peter Flannery","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":295},{"id":296,"title":"The Warded Man","series":"The Demon Cycle Series","seriesNum":null,"author":"Peter V. Brett","pages":null,"audioHours":null,"status":"TBR","genre":"Fantasy","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":296},{"id":297,"title":"No Country For Old Men","series":null,"seriesNum":null,"author":"Cormac McCarthy","pages":null,"audioHours":null,"status":"TBR","genre":null,"yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":null,"priority":297},{"id":298,"title":"Road to the Breaking","series":"Road to the Breaking","seriesNum":1.0,"author":"Chris Bennett","pages":null,"audioHours":null,"status":"TBR","genre":"Historical Fiction","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":"2026-03-27","priority":298},{"id":299,"title":"The Road to Revolution","series":"Road to Revolution","seriesNum":1.0,"author":"Chris Bennett","pages":null,"audioHours":null,"status":"TBR","genre":"Historical Fiction","yearStarted":null,"monthStarted":null,"yearCompleted":null,"monthCompleted":null,"dateStarted":null,"dateCompleted":null,"format":null,"quote":null,"dateAdded":"2026-03-27","priority":299}]
+;
+
+const SEED_SERIES_META = 
+[{"series":"Harry Potter","author":"J.K. Rowling","booksReadSheet":7,"totalBooks":7,"ongoing":"N","readingStatus":"Complete"},{"series":"Riyria Revelations","author":"Michael J. Sullivan","booksReadSheet":3,"totalBooks":3,"ongoing":"N","readingStatus":"Complete"},{"series":"Raven's Shadow","author":"Anthony Ryan","booksReadSheet":2,"totalBooks":3,"ongoing":"N","readingStatus":"DNF"},{"series":"Traveler's Gate Trilogy","author":"Will Wight","booksReadSheet":3,"totalBooks":3,"ongoing":"N","readingStatus":"Complete"},{"series":"The Stormlight Archive","author":"Brandon Sanderson","booksReadSheet":5,"totalBooks":5,"ongoing":"Y","readingStatus":"Caught Up"},{"series":"Mageborn","author":"Michael G. Manning","booksReadSheet":4,"totalBooks":5,"ongoing":"N","readingStatus":"DNF"},{"series":"The Elder Empire: Sea","author":"Will Wight","booksReadSheet":2,"totalBooks":3,"ongoing":"N","readingStatus":"DNF"},{"series":"Cradle","author":"Will Wight","booksReadSheet":13,"totalBooks":13,"ongoing":"N","readingStatus":"Complete"},{"series":"Wheel of Time","author":"Robert Jordan","booksReadSheet":3,"totalBooks":14,"ongoing":"N","readingStatus":"DNF"},{"series":"Arcane Ascension","author":"Andrew Rowe","booksReadSheet":4,"totalBooks":6,"ongoing":"Y","readingStatus":"Started"},{"series":"The Band","author":"Nicholas Eames","booksReadSheet":2,"totalBooks":2,"ongoing":"Y","readingStatus":"Caught Up"},{"series":"Weapons and Wielders","author":"Andrew Rowe","booksReadSheet":1,"totalBooks":3,"ongoing":"Y","readingStatus":"Started"},{"series":"Night Angel","author":"Brent Weeks","booksReadSheet":3,"totalBooks":3,"ongoing":"N","readingStatus":"Complete"},{"series":"Towers of Heaven","author":"Cameron Milan","booksReadSheet":1,"totalBooks":3,"ongoing":"N","readingStatus":"DNF"},{"series":"The Adept Archives","author":"Darren Hultberg Jr.","booksReadSheet":2,"totalBooks":3,"ongoing":"N","readingStatus":"Started"},{"series":"World Tree Online","author":"E.A. Hooper","booksReadSheet":3,"totalBooks":3,"ongoing":"N","readingStatus":"Complete"},{"series":"The Burning","author":"Evan Winter","booksReadSheet":2,"totalBooks":2,"ongoing":"Y","readingStatus":"Caught Up"},{"series":"A Thousand Li","author":"Tao Wong","booksReadSheet":1,"totalBooks":12,"ongoing":"N","readingStatus":"DNF"},{"series":"Lightbringer","author":"Brent Weeks","booksReadSheet":2,"totalBooks":5,"ongoing":"N","readingStatus":"DNF"},{"series":"Warformed: Stormweaver","author":"Bryce O'Connor, Luke Chmilenko","booksReadSheet":2,"totalBooks":2,"ongoing":"Y","readingStatus":"Caught Up"},{"series":"Instrument of Omens","author":"Davis Ashura","booksReadSheet":2,"totalBooks":4,"ongoing":"Y","readingStatus":"Started"},{"series":"Red Rising Saga","author":"Pierce Brown","booksReadSheet":3,"totalBooks":6,"ongoing":"Y","readingStatus":"Started"},{"series":"First Fist","author":"TJ Reynolds","booksReadSheet":1,"totalBooks":2,"ongoing":"Y","readingStatus":"Started"},{"series":"Pact and Pattern","author":"J.T. Greathouse","booksReadSheet":2,"totalBooks":3,"ongoing":"N","readingStatus":"DNF"},{"series":"Dune Saga","author":"Frank Herbert","booksReadSheet":1,"totalBooks":6,"ongoing":"N","readingStatus":"Started"},{"series":"The Last Horizon","author":"Will Wight","booksReadSheet":4,"totalBooks":4,"ongoing":"Y","readingStatus":"Caught Up"},{"series":"Path of the Thunderbird","author":"Eden Hudson","booksReadSheet":2,"totalBooks":4,"ongoing":"N","readingStatus":"DNF"},{"series":"Lord of the Rings","author":"J.R.R Tolkien","booksReadSheet":3,"totalBooks":3,"ongoing":"N","readingStatus":"Complete"},{"series":"The Legends of the First Empire","author":"Michael J. Sullivan","booksReadSheet":1,"totalBooks":6,"ongoing":"N","readingStatus":"Started"},{"series":"Sun Eater Series","author":"Christopher Ruocchio","booksReadSheet":2,"totalBooks":5,"ongoing":"Y","readingStatus":"Started"},{"series":"The Bound and the Broken Novellas","author":"Ryan Cahill","booksReadSheet":3,"totalBooks":4,"ongoing":"Y","readingStatus":"Started"},{"series":"The Bound and the Broken","author":"Ryan Cahill","booksReadSheet":4,"totalBooks":4,"ongoing":"Y","readingStatus":"Caught Up"},{"series":"Hierarchy","author":"James Islington","booksReadSheet":2,"totalBooks":2,"ongoing":"Y","readingStatus":"Caught Up"},{"series":"The Echoes Saga","author":"Philip C. Quaintrell","booksReadSheet":1,"totalBooks":9,"ongoing":"Y","readingStatus":"Started"},{"series":"Wanderlands","author":"Benjamin Liar","booksReadSheet":1,"totalBooks":1,"ongoing":"Y","readingStatus":"Caught Up"},{"series":"Empire of the Vampire","author":"Jay Kristoff","booksReadSheet":3,"totalBooks":3,"ongoing":"N","readingStatus":"Complete"},{"series":"He Who Fights With Monsters","author":"Shirtaloon, Travis Deverell","booksReadSheet":7,"totalBooks":1,"ongoing":"Y","readingStatus":"FALSE"},{"series":"1% Lifesteal","author":"Robert Blaise","booksReadSheet":1,"totalBooks":12,"ongoing":"Y","readingStatus":"Started"},{"series":"Victor of Tucson","author":"Plum Parrot","booksReadSheet":6,"totalBooks":11,"ongoing":"Y","readingStatus":"Started"},{"series":"Grimnir Chronicles","author":"Brady Hunsaker","booksReadSheet":2,"totalBooks":2,"ongoing":"Y","readingStatus":"Caught Up"},{"series":"Dungeon Crawler Carl","author":"Matt Dinniman","booksReadSheet":7,"totalBooks":8,"ongoing":"Y","readingStatus":"Started"},{"series":"Titan's Nest Saga","author":"T.D. Orel","booksReadSheet":0,"totalBooks":2,"ongoing":"Y","readingStatus":"TBR"},{"series":"The Bloodsworn Saga","author":"John Gwynne","booksReadSheet":0,"totalBooks":3,"ongoing":"N","readingStatus":"TBR"},{"series":"Lonesome Dove","author":"Larry McMurtry","booksReadSheet":0,"totalBooks":null,"ongoing":"","readingStatus":"TBR"}]
+;
+
+const CALL_PREFIX = { "Fantasy":"FIC", "Sci-Fi":"SCI", "Sci-Fantasy":"SCF", "Christian":"REL", "Western":"WST", "Historical Fiction":"HIS", "Other":"GEN", "Autobiography, Philosophy":"BIO" };
+
+function callNumber(book){
+  const g = (book.genre||"Other").split(",")[0].trim();
+  const prefix = CALL_PREFIX[g] || g.slice(0,3).toUpperCase() || "GEN";
+  const authorPart = (book.author||"???").replace(/[^A-Za-z]/g,"").slice(0,3).toUpperCase() || "ANO";
+  return `${prefix}-${authorPart}-${String(book.id).padStart(3,"0")}`;
+}
+
+function fmtHours(h){
+  if(h === null || h === undefined || h === "") return null;
+  const num = Number(h);
+  if(Number.isNaN(num)) return null;
+  const hrs = Math.floor(num);
+  const mins = Math.round((num - hrs) * 60);
+  return `${hrs}h ${mins}m`;
+}
+
+function todayISO(){
+  return new Date().toISOString().slice(0,10);
+}
+
+function monthName(m){
+  const names = ["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return names[m] || "";
+}
+
+function finishSortKey(b) {
+  if (b.dateCompleted) return b.dateCompleted;
+  if (b.yearCompleted) return `${b.yearCompleted}-${String(b.monthCompleted || 12).padStart(2, "0")}-15`;
+  return "";
+}
+
+function sortBooksWithin(list, mode) {
+  const arr = [...list];
+  if (mode === "title") {
+    arr.sort((a, b) => a.title.localeCompare(b.title));
+  } else if (mode === "author") {
+    arr.sort((a, b) => (a.author || "").localeCompare(b.author || ""));
+  } else if (mode === "pages") {
+    arr.sort((a, b) => (a.pages ?? Infinity) - (b.pages ?? Infinity));
+  } else {
+    arr.sort((a, b) => finishSortKey(b).localeCompare(finishSortKey(a)));
+  }
+  return arr;
+}
+
+const GENRE_COLORS = {
+  "Fantasy": "#B8874A",
+  "Sci-Fi": "#5C8AA8",
+  "Sci-Fantasy": "#8A7CB0",
+  "Christian": "#A17A3D",
+  "Western": "#9C5B3C",
+  "Historical Fiction": "#6E7F52",
+  "Other": "#8B8676",
+};
+function genreColor(genre){
+  const g = (genre||"Other").split(",")[0].trim();
+  return GENRE_COLORS[g] || "#8B8676";
+}
+function StatBlock({ label, value, sub }) {
+  return (
+    <div style={styles.statBlock}>
+      <div style={styles.statValue}>{value}</div>
+      <div style={styles.statLabel}>{label}</div>
+      {sub && <div style={styles.statSub}>{sub}</div>}
+    </div>
+  );
+}
+
+function GenreTag({ genre }) {
+  if (!genre) return null;
+  const color = genreColor(genre);
+  return (
+    <span style={{ ...styles.genreTag, borderColor: color, color }}>
+      {genre}
+    </span>
+  );
+}
+
+function StatusStamp({ status }) {
+  const cfg = {
+    "Read": { color: "#4C7A5D", label: "READ" },
+    "In Progress": { color: "#B8874A", label: "READING" },
+    "TBR": { color: "#8B8676", label: "SHELVED" },
+    "DNF": { color: "#A13D2D", label: "DNF" },
+  }[status] || { color: "#8B8676", label: status };
+  return (
+    <span style={{ ...styles.stamp, color: cfg.color, borderColor: cfg.color }}>
+      {cfg.label}
+    </span>
+  );
+}
+
+function BookCard({ book, onStatusChange, onDelete, reorder, rank, onMoveUp, onMoveDown, canMoveUp, canMoveDown, onSetRank, onOpenEdit }) {
+  const [showQuote, setShowQuote] = useState(false);
+  const [editingRank, setEditingRank] = useState(false);
+  const [rankDraft, setRankDraft] = useState(rank);
+  const audio = fmtHours(book.audioHours);
+
+  function commitRank() {
+    setEditingRank(false);
+    const n = parseInt(rankDraft, 10);
+    if (!Number.isNaN(n) && n !== rank) onSetRank(book.id, n);
+  }
+
+  return (
+    <div style={styles.card} onClick={() => onOpenEdit && onOpenEdit(book)}>
+      {reorder && (
+        <div style={styles.reorderRow} onClick={e => e.stopPropagation()}>
+          {editingRank ? (
+            <input
+              autoFocus
+              type="number"
+              min="1"
+              style={styles.rankInput}
+              value={rankDraft}
+              onChange={e => setRankDraft(e.target.value)}
+              onBlur={commitRank}
+              onKeyDown={e => { if (e.key === "Enter") commitRank(); if (e.key === "Escape") setEditingRank(false); }}
+            />
+          ) : (
+            <span
+              style={styles.rankBadge}
+              title="Click to set an exact position"
+              onClick={() => { setRankDraft(rank); setEditingRank(true); }}
+            >
+              #{rank}
+            </span>
+          )}
+          <div style={styles.reorderBtns}>
+            <button style={{ ...styles.reorderBtn, opacity: canMoveUp ? 1 : 0.3, cursor: canMoveUp ? "pointer" : "default" }} onClick={() => canMoveUp && onMoveUp(book.id)} disabled={!canMoveUp} title="Move up the queue">↑</button>
+            <button style={{ ...styles.reorderBtn, opacity: canMoveDown ? 1 : 0.3, cursor: canMoveDown ? "pointer" : "default" }} onClick={() => canMoveDown && onMoveDown(book.id)} disabled={!canMoveDown} title="Move down the queue">↓</button>
+          </div>
+        </div>
+      )}
+      <div style={styles.cardTopRow}>
+        <span style={styles.callNumber}>{callNumber(book)}</span>
+        <StatusStamp status={book.status} />
+      </div>
+      <div style={styles.cardTitle}>{book.title}</div>
+      <div style={styles.cardAuthor}>{book.author || "Unknown author"}</div>
+      {book.series && (
+        <div style={styles.cardSeries}>
+          {book.series}{book.seriesNum ? ` · Book ${book.seriesNum}` : ""}
+        </div>
+      )}
+      <div style={styles.cardMetaRow}>
+        {book.pages ? <span style={styles.metaItem}>{Math.round(book.pages)}p</span> : null}
+        {audio ? <span style={styles.metaItem}>{audio} audio</span> : null}
+        <GenreTag genre={book.genre} />
+      </div>
+      {book.dateStarted && book.status === "In Progress" && (
+        <div style={styles.cardCompleted}>Started {book.dateStarted}</div>
+      )}
+      {book.yearCompleted && (
+        <div style={styles.cardCompleted}>
+          Finished {book.dateCompleted ? book.dateCompleted : (book.monthCompleted ? monthName(book.monthCompleted) + " " + book.yearCompleted : book.yearCompleted)}
+        </div>
+      )}
+      {book.quote && (
+        <div onClick={e => e.stopPropagation()}>
+          <button style={styles.quoteToggle} onClick={() => setShowQuote(s => !s)}>
+            <Quote size={12} /> {showQuote ? "hide quote" : "show quote"}
+          </button>
+          {showQuote && <div style={styles.quoteBlock}>{book.quote}</div>}
+        </div>
+      )}
+      <div style={styles.cardActions} onClick={e => e.stopPropagation()}>
+        {book.status === "TBR" && (
+          <button style={styles.actionBtn} onClick={() => onStatusChange(book.id, "In Progress")}>
+            <Play size={13} /> Start
+          </button>
+        )}
+        {book.status !== "Read" && (
+          <button style={styles.actionBtn} onClick={() => onStatusChange(book.id, "Read")}>
+            <CheckCircle2 size={13} /> Mark read
+          </button>
+        )}
+        {book.status !== "DNF" && (
+          <button style={styles.actionBtnMuted} onClick={() => onStatusChange(book.id, "DNF")}>
+            <BookX size={13} /> DNF
+          </button>
+        )}
+        <button style={styles.deleteBtn} onClick={() => onDelete(book.id)}>
+          <Trash2 size={13} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ReadingLedger({ uid, email, onSignOut }) {
+  const [books, setBooks] = useState(null);
+  const [goals, setGoals] = useState(null);
+  const loadedRef = useRef(false);
+  const [tab, setTab] = useState("dashboard");
+
+  const [tbrSearch, setTbrSearch] = useState("");
+  const [tbrGenre, setTbrGenre] = useState("All");
+  const [tbrSort, setTbrSort] = useState("priority");
+
+  const [libSearch, setLibSearch] = useState("");
+  const [libStatusFilter, setLibStatusFilter] = useState("All");
+  const [seriesSearch, setSeriesSearch] = useState("");
+  const [seriesStatusFilter, setSeriesStatusFilter] = useState("All");
+  const [libGroupBy, setLibGroupBy] = useState("year");
+  const [libSort, setLibSort] = useState("finish");
+  const [expandedYears, setExpandedYears] = useState(() => new Set());
+  const [editingBook, setEditingBook] = useState(null);
+  const [editDraft, setEditDraft] = useState(null);
+  const [editLookupLoading, setEditLookupLoading] = useState(false);
+  const [editLookupError, setEditLookupError] = useState("");
+  const [editLookupDone, setEditLookupDone] = useState(false);
+
+  const [showAdd, setShowAdd] = useState(false);
+  const emptyNewBook = { title: "", author: "", series: "", seriesNum: "", genre: "", pages: "", audioHours: "", status: "TBR" };
+  const [newBook, setNewBook] = useState(emptyNewBook);
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupError, setLookupError] = useState("");
+  const [lookupDone, setLookupDone] = useState(false);
+
+  const [goalDraft, setGoalDraft] = useState({});
+
+  const booksRef = useMemo(() => (uid ? firebase.firestore().collection("users").doc(uid).collection("library").doc("books") : null), [uid]);
+  const goalsRef = useMemo(() => (uid ? firebase.firestore().collection("users").doc(uid).collection("library").doc("goals") : null), [uid]);
+
+  useEffect(() => {
+    if (!booksRef) return;
+    const unsub = booksRef.onSnapshot(
+      async (snap) => {
+        if (snap.exists && snap.data() && snap.data().dataVersion === DATA_VERSION) {
+          setBooks(snap.data().list || []);
+          loadedRef.current = true;
+        } else {
+          const seeded = SEED_BOOKS.map((book, i) => ({ ...book, priority: book.priority ?? i }));
+          await booksRef.set({ list: seeded, dataVersion: DATA_VERSION });
+        }
+      },
+      (err) => console.error("books snapshot error", err)
+    );
+    return () => unsub();
+  }, [booksRef]);
+
+  useEffect(() => {
+    if (!goalsRef) return;
+    const unsub = goalsRef.onSnapshot(
+      async (snap) => {
+        if (snap.exists) {
+          setGoals(snap.data().goals || {});
+        } else {
+          const defaultGoals = { "2025": 30, "2026": 40 };
+          await goalsRef.set({ goals: defaultGoals });
+        }
+      },
+      (err) => console.error("goals snapshot error", err)
+    );
+    return () => unsub();
+  }, [goalsRef]);
+
+  function persistBooks(newList) {
+    setBooks(newList);
+    if (booksRef) booksRef.set({ list: newList, dataVersion: DATA_VERSION }).catch(e => console.error("save books failed", e));
+  }
+
+  function persistGoals(newGoals) {
+    setGoals(newGoals);
+    if (goalsRef) goalsRef.set({ goals: newGoals }).catch(e => console.error("save goals failed", e));
+  }
+
+  const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth() + 1;
+
+  const yearStats = useMemo(() => {
+    if (!books) return {};
+    const acc = {};
+    books.forEach(b => {
+      if (b.status === "Read" && b.yearCompleted) {
+        const y = b.yearCompleted;
+        if (!acc[y]) acc[y] = { read: 0, pages: 0, audio: 0, months: {} };
+        acc[y].read += 1;
+        acc[y].pages += Number(b.pages) || 0;
+        acc[y].audio += Number(b.audioHours) || 0;
+        if (b.monthCompleted) acc[y].months[b.monthCompleted] = (acc[y].months[b.monthCompleted] || 0) + 1;
+      }
+    });
+    return acc;
+  }, [books]);
+
+  const allYears = useMemo(() => {
+    const ys = new Set(Object.keys(yearStats).map(Number));
+    if (goals) Object.keys(goals).forEach(y => ys.add(Number(y)));
+    ys.add(currentYear);
+    return Array.from(ys).sort((a, b) => b - a);
+  }, [yearStats, goals, currentYear]);
+
+  const genres = useMemo(() => {
+    if (!books) return [];
+    const set = new Set();
+    books.forEach(b => { if (b.genre) b.genre.split(",").forEach(g => set.add(g.trim())); });
+    return Array.from(set).sort();
+  }, [books]);
+
+  const seriesInvested = useMemo(() => {
+    if (!books) return new Set();
+    const set = new Set();
+    books.forEach(b => { if (b.series && (b.status === "Read" || b.status === "In Progress")) set.add(b.series); });
+    return set;
+  }, [books]);
+
+  const seriesProgress = useMemo(() => {
+    if (!books) return [];
+    const bySeries = {};
+    books.forEach(b => {
+      if (!b.series) return;
+      if (!bySeries[b.series]) bySeries[b.series] = [];
+      bySeries[b.series].push(b);
+    });
+    const metaMap = {};
+    SEED_SERIES_META.forEach(m => { metaMap[m.series] = m; });
+
+    const rows = Object.entries(bySeries).map(([name, list]) => {
+      const meta = metaMap[name];
+      const readCount = list.filter(b => b.status === "Read").length;
+      const inProgressCount = list.filter(b => b.status === "In Progress").length;
+      const dnfCount = list.filter(b => b.status === "DNF").length;
+      const trackedTotal = list.length;
+      const totalBooks = meta && meta.totalBooks ? Math.max(meta.totalBooks, trackedTotal) : trackedTotal;
+      const author = (meta && meta.author) || list[0].author;
+      const ongoing = meta ? meta.ongoing === "Y" : false;
+      let status;
+      if (dnfCount > 0) status = "DNF";
+      else if (readCount === 0 && inProgressCount === 0) status = "Not started";
+      else if (inProgressCount > 0) status = "Reading";
+      else if (readCount >= totalBooks) status = ongoing ? "Caught up" : "Complete";
+      else status = "Started";
+      return { name, author, readCount, totalBooks, ongoing, status };
+    });
+    const rank = { "Reading": 0, "Started": 1, "Caught up": 2, "Not started": 3, "DNF": 4, "Complete": 5 };
+    rows.sort((a, b) => (rank[a.status] ?? 6) - (rank[b.status] ?? 6) || a.name.localeCompare(b.name));
+    return rows;
+  }, [books]);
+
+  const filteredSeries = useMemo(() => {
+    let list = seriesProgress;
+    if (seriesStatusFilter !== "All") list = list.filter(s => s.status === seriesStatusFilter);
+    if (seriesSearch.trim()) {
+      const q = seriesSearch.toLowerCase();
+      list = list.filter(s => s.name.toLowerCase().includes(q) || (s.author || "").toLowerCase().includes(q));
+    }
+    return list;
+  }, [seriesProgress, seriesSearch, seriesStatusFilter]);
+
+  const tbrBooks = useMemo(() => {
+    if (!books) return [];
+    let list = books.filter(b => b.status === "TBR");
+    if (tbrGenre !== "All") list = list.filter(b => (b.genre || "").includes(tbrGenre));
+    if (tbrSearch.trim()) {
+      const q = tbrSearch.toLowerCase();
+      list = list.filter(b => b.title.toLowerCase().includes(q) || (b.author || "").toLowerCase().includes(q) || (b.series || "").toLowerCase().includes(q));
+    }
+    list = [...list].sort((a, b) => {
+      if (tbrSort === "priority") return (a.priority ?? 0) - (b.priority ?? 0);
+      if (tbrSort === "continuing") {
+        const ac = seriesInvested.has(a.series) ? 0 : 1;
+        const bc = seriesInvested.has(b.series) ? 0 : 1;
+        if (ac !== bc) return ac - bc;
+        if (ac === 0) return (a.seriesNum ?? 999) - (b.seriesNum ?? 999);
+        return (a.priority ?? 0) - (b.priority ?? 0);
+      }
+      if (tbrSort === "pages") {
+        const ap = a.pages ?? Infinity, bp = b.pages ?? Infinity;
+        return ap - bp;
+      }
+      if (tbrSort === "added") return (b.dateAdded || "").localeCompare(a.dateAdded || "");
+      if (tbrSort === "author") return (a.author || "").localeCompare(b.author || "");
+      if (tbrSort === "title") return a.title.localeCompare(b.title);
+      if (tbrSort === "series") return (a.series || "zzz").localeCompare(b.series || "zzz");
+      return 0;
+    });
+    return list;
+  }, [books, tbrGenre, tbrSearch, tbrSort, seriesInvested]);
+
+  function reorderTBR(id, targetIndex0) {
+    const prev = books;
+    const ordered = prev.filter(b => b.status === "TBR").slice().sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0));
+    const idx = ordered.findIndex(b => b.id === id);
+    if (idx === -1) return;
+    const clamped = Math.max(0, Math.min(targetIndex0, ordered.length - 1));
+    if (clamped === idx) return;
+    const [item] = ordered.splice(idx, 1);
+    ordered.splice(clamped, 0, item);
+    const priorityMap = {};
+    ordered.forEach((b, i) => { priorityMap[b.id] = i; });
+    const newList = prev.map(book => (priorityMap[book.id] !== undefined ? { ...book, priority: priorityMap[book.id] } : book));
+    persistBooks(newList);
+  }
+
+  function moveInQueue(id, direction) {
+    const idx = tbrBooks.findIndex(b => b.id === id);
+    if (idx === -1) return;
+    reorderTBR(id, direction === "up" ? idx - 1 : idx + 1);
+  }
+
+  function setRankDirect(id, oneBasedRank) {
+    reorderTBR(id, oneBasedRank - 1);
+  }
+
+  const inProgressBooks = useMemo(() => (books || []).filter(b => b.status === "In Progress"), [books]);
+
+  const libraryGroups = useMemo(() => {
+    if (!books) return [];
+    let list = books.filter(b => b.status !== "TBR");
+    if (libStatusFilter !== "All") list = list.filter(b => b.status === libStatusFilter);
+    if (libSearch.trim()) {
+      const q = libSearch.toLowerCase();
+      list = list.filter(b => b.title.toLowerCase().includes(q) || (b.author || "").toLowerCase().includes(q) || (b.series || "").toLowerCase().includes(q));
+    }
+    const groups = {};
+
+    if (libGroupBy === "status") {
+      list.forEach(b => {
+        const key = STATUS_LABEL[b.status] || b.status;
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(b);
+      });
+      const order = ["Currently Reading", "Read", "Did Not Finish"];
+      return order.filter(k => groups[k]).map(k => [k, sortBooksWithin(groups[k], libSort)]);
+    }
+
+    list.forEach(b => {
+      let key;
+      if (b.status === "In Progress") key = "Currently Reading";
+      else if (b.status === "DNF") key = b.yearCompleted ? String(b.yearCompleted) : "Did Not Finish";
+      else key = b.yearCompleted ? String(b.yearCompleted) : "Undated";
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(b);
+    });
+    const entries = Object.entries(groups).map(([k, arr]) => [k, sortBooksWithin(arr, libSort)]);
+    entries.sort((a, b) => {
+      if (a[0] === "Currently Reading") return -1;
+      if (b[0] === "Currently Reading") return 1;
+      const aSpecial = Number.isNaN(Number(a[0]));
+      const bSpecial = Number.isNaN(Number(b[0]));
+      if (aSpecial && bSpecial) return 0;
+      if (aSpecial) return 1;
+      if (bSpecial) return -1;
+      return Number(b[0]) - Number(a[0]);
+    });
+    return entries;
+  }, [books, libSearch, libStatusFilter, libGroupBy, libSort]);
+
+  function updateStatus(id, status) {
+    const newList = books.map(b => {
+      if (b.id !== id) return b;
+      const updated = { ...b, status };
+      const today = todayISO();
+      if (status === "Read") {
+        updated.dateCompleted = today;
+        updated.yearCompleted = currentYear;
+        updated.monthCompleted = currentMonth;
+      }
+      if (status === "In Progress") {
+        updated.dateStarted = today;
+        updated.yearStarted = currentYear;
+      }
+      return updated;
+    });
+    persistBooks(newList);
+  }
+
+  function deleteBook(id) {
+    persistBooks(books.filter(b => b.id !== id));
+  }
+
+  useEffect(() => {
+    if (editingBook) {
+      setEditDraft({
+        title: editingBook.title || "",
+        author: editingBook.author || "",
+        series: editingBook.series || "",
+        seriesNum: editingBook.seriesNum != null ? String(editingBook.seriesNum) : "",
+        genre: editingBook.genre || "",
+        pages: editingBook.pages != null ? String(editingBook.pages) : "",
+        audioHours: editingBook.audioHours != null ? String(editingBook.audioHours) : "",
+        status: editingBook.status || "TBR",
+        dateStarted: editingBook.dateStarted || "",
+        dateCompleted: editingBook.dateCompleted || "",
+      });
+      setEditLookupLoading(false);
+      setEditLookupError("");
+      setEditLookupDone(false);
+    } else {
+      setEditDraft(null);
+    }
+  }, [editingBook]);
+
+  function saveEdit() {
+    if (!editDraft || !editingBook) return;
+    const newList = books.map(b => {
+      if (b.id !== editingBook.id) return b;
+      const updated = {
+        ...b,
+        title: editDraft.title.trim() || b.title,
+        author: editDraft.author.trim() || null,
+        series: editDraft.series.trim() || null,
+        seriesNum: editDraft.seriesNum !== "" ? Number(editDraft.seriesNum) : null,
+        genre: editDraft.genre.trim() || null,
+        pages: editDraft.pages !== "" ? Number(editDraft.pages) : null,
+        audioHours: editDraft.audioHours !== "" ? Number(editDraft.audioHours) : null,
+        status: editDraft.status,
+        dateStarted: editDraft.dateStarted || null,
+        dateCompleted: editDraft.dateCompleted || null,
+      };
+      if (editDraft.dateStarted) updated.yearStarted = new Date(editDraft.dateStarted).getFullYear();
+      if (editDraft.dateCompleted) {
+        const d = new Date(editDraft.dateCompleted);
+        updated.yearCompleted = d.getFullYear();
+        updated.monthCompleted = d.getMonth() + 1;
+      } else if (editDraft.status !== "Read") {
+        updated.yearCompleted = null;
+        updated.monthCompleted = null;
+      }
+      return updated;
+    });
+    persistBooks(newList);
+    setEditingBook(null);
+  }
+
+  function addBook() {
+    if (!newBook.title.trim()) return;
+    const id = Math.max(0, ...books.map(b => b.id)) + 1;
+    const book = {
+      id,
+      title: newBook.title.trim(),
+      author: newBook.author.trim() || null,
+      series: newBook.series.trim() || null,
+      seriesNum: newBook.seriesNum ? Number(newBook.seriesNum) : null,
+      genre: newBook.genre.trim() || null,
+      pages: newBook.pages ? Number(newBook.pages) : null,
+      audioHours: newBook.audioHours ? Number(newBook.audioHours) : null,
+      status: newBook.status,
+      yearStarted: newBook.status === "In Progress" ? currentYear : null,
+      yearCompleted: newBook.status === "Read" ? currentYear : null,
+      monthCompleted: newBook.status === "Read" ? currentMonth : null,
+      format: null,
+      dateAdded: todayISO(),
+      priority: Math.max(0, ...books.map(b => b.priority ?? 0)) + 1,
+    };
+    persistBooks([book, ...books]);
+    setNewBook(emptyNewBook);
+    setLookupDone(false);
+    setLookupError("");
+    setShowAdd(false);
+  }
+
+  async function fetchBookDetails(title, author) {
+    const prompt = `Search the web for the book "${title}"${author ? " by " + author : ""}. ` +
+      `Reply with ONLY a raw JSON object, no markdown code fences, no commentary before or after. ` +
+      `Use exactly these keys: "author" (string, the author's full name(s)), "series" (string or null, the series name if part of one, else null), ` +
+      `"seriesNum" (number or null, position in the series), "pages" (number or null, print page count), ` +
+      `"audioHours" (number or null, audiobook length in decimal hours, e.g. 12.5), "genre" (short string like "Fantasy" or "Sci-Fi"). ` +
+      `If you cannot find a field, use null for it. Do not guess wildly; prefer null over a fabricated number.`;
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1000,
+        messages: [{ role: "user", content: prompt }],
+        tools: [{ type: "web_search_20250305", name: "web_search" }],
+      }),
+    });
+    const data = await response.json();
+    const textBlocks = (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n");
+    const clean = textBlocks.replace(/```json|```/g, "").trim();
+    const start = clean.indexOf("{");
+    const end = clean.lastIndexOf("}");
+    if (start === -1 || end === -1) throw new Error("No JSON found");
+    return JSON.parse(clean.slice(start, end + 1));
+  }
+
+  async function lookupDetails() {
+    if (!newBook.title.trim()) {
+      setLookupError("Enter a title first.");
+      return;
+    }
+    setLookupLoading(true);
+    setLookupError("");
+    try {
+      const parsed = await fetchBookDetails(newBook.title, newBook.author);
+      setNewBook(nb => ({
+        ...nb,
+        author: parsed.author || nb.author,
+        series: parsed.series || "",
+        seriesNum: parsed.seriesNum != null ? String(parsed.seriesNum) : "",
+        pages: parsed.pages != null ? String(parsed.pages) : "",
+        audioHours: parsed.audioHours != null ? String(parsed.audioHours) : "",
+        genre: parsed.genre || nb.genre,
+      }));
+      setLookupDone(true);
+    } catch (e) {
+      setLookupError("Couldn't fetch details automatically — fill in what you know by hand.");
+    }
+    setLookupLoading(false);
+  }
+
+  async function lookupEditDetails() {
+    if (!editDraft || !editDraft.title.trim()) {
+      setEditLookupError("Enter a title first.");
+      return;
+    }
+    setEditLookupLoading(true);
+    setEditLookupError("");
+    try {
+      const parsed = await fetchBookDetails(editDraft.title, editDraft.author);
+      setEditDraft(ed => ({
+        ...ed,
+        author: parsed.author || ed.author,
+        series: parsed.series || ed.series,
+        seriesNum: parsed.seriesNum != null ? String(parsed.seriesNum) : ed.seriesNum,
+        pages: parsed.pages != null ? String(parsed.pages) : ed.pages,
+        audioHours: parsed.audioHours != null ? String(parsed.audioHours) : ed.audioHours,
+        genre: parsed.genre || ed.genre,
+      }));
+      setEditLookupDone(true);
+    } catch (e) {
+      setEditLookupError("Couldn't fetch details automatically — fill in what you know by hand.");
+    }
+    setEditLookupLoading(false);
+  }
+
+  function updateGoal(year, value) {
+    persistGoals({ ...goals, [year]: Number(value) || 0 });
+  }
+
+  if (!books || !goals) {
+    return (
+      <div style={styles.loadingScreen}>
+        <Loader2 className="spin" size={28} />
+        <div style={{ marginTop: 12, fontFamily: "'JetBrains Mono', monospace", fontSize: 13, letterSpacing: 1 }}>OPENING THE CATALOG…</div>
+      </div>
+    );
+  }
+
+  const curStats = yearStats[currentYear] || { read: 0, pages: 0, audio: 0, months: {} };
+  const curGoal = Number(goals[currentYear]) || 0;
+  const pace = currentMonth > 0 ? (curStats.read / currentMonth) * 12 : 0;
+
+  return (
+    <div style={styles.app}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+        * { box-sizing: border-box; }
+        body { margin: 0; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-thumb { background: #3a4a3f; border-radius: 4px; }
+        .spin { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg);} to { transform: rotate(360deg);} }
+        input, select, button, textarea { font-family: 'Inter', sans-serif; }
+        input:focus, select:focus, textarea:focus { outline: 2px solid #B8874A; outline-offset: 1px; }
+        button:focus-visible { outline: 2px solid #B8874A; outline-offset: 2px; }
+        @media (max-width: 640px) {
+          .cardGrid { grid-template-columns: 1fr !important; }
+          .statGrid { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+      `}</style>
+
+      <div style={styles.headerBar}>
+        <div style={styles.headerBarInner}>
+          <div>
+            <div style={styles.brand}>The Reading Ledger</div>
+            <div style={styles.brandSub}>a running catalog of what's read, what's shelved, what's next</div>
+          </div>
+          <div style={styles.accountRow}>
+            <span style={styles.accountEmail}>{email}</span>
+            <button style={styles.signOutBtn} onClick={onSignOut}>Sign out</button>
+          </div>
+        </div>
+      </div>
+
+      <div style={styles.tabRow}>
+        {[
+          { id: "dashboard", label: "Dashboard", icon: LayoutGrid },
+          { id: "tbr", label: "To Be Read", icon: BookOpen },
+          { id: "library", label: "Library", icon: Library },
+          { id: "series", label: "By Series", icon: SeriesIcon },
+          { id: "stats", label: "Yearly Stats", icon: StatsIcon },
+          { id: "goals", label: "Goals", icon: Target },
+        ].map(t => {
+          const Icon = t.icon;
+          const active = tab === t.id;
+          return (
+            <button key={t.id} onClick={() => setTab(t.id)} style={{ ...styles.tabBtn, ...(active ? styles.tabBtnActive : {}) }}>
+              <Icon size={14} /> {t.label}
+            </button>
+          );
+        })}
+      </div>
+
+      <div style={styles.content}>
+        {tab === "dashboard" && (
+          <div>
+            <div style={styles.dashHero}>
+              <div style={styles.heroNumber}>{curStats.read}<span style={styles.heroOf}> / {curGoal || "—"}</span></div>
+              <div style={styles.heroLabel}>books finished in {currentYear}</div>
+              <div style={styles.shelf}>
+                {Array.from({ length: Math.max(curGoal, curStats.read, 1) }).map((_, i) => (
+                  <div key={i} style={{ ...styles.tick, background: i < curStats.read ? "#B8874A" : "rgba(201,194,172,0.15)" }} />
+                ))}
+              </div>
+              {curGoal > 0 && (
+                <div style={styles.heroSub}>
+                  {curStats.read >= curGoal
+                    ? `Goal met — projected pace ${pace.toFixed(1)} books/yr`
+                    : `On pace for ${pace.toFixed(1)} books this year, goal is ${curGoal}`}
+                </div>
+              )}
+            </div>
+
+            <div className="statGrid" style={styles.statGrid}>
+              <StatBlock label="Pages read this year" value={Math.round(curStats.pages).toLocaleString()} />
+              <StatBlock label="Audiobook hours" value={curStats.audio.toFixed(1)} />
+              <StatBlock label="Currently reading" value={inProgressBooks.length} />
+              <StatBlock label="On the shelf (TBR)" value={books.filter(b => b.status === "TBR").length} />
+            </div>
+
+            {inProgressBooks.length > 0 && (
+              <div style={styles.sectionBlock}>
+                <div style={styles.sectionTitle}>Currently reading</div>
+                <div className="cardGrid" style={styles.cardGrid}>
+                  {inProgressBooks.map(b => (
+                    <BookCard key={b.id} book={b} onStatusChange={updateStatus} onDelete={deleteBook} onOpenEdit={setEditingBook} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div style={styles.sectionBlock}>
+              <div style={styles.sectionTitle}>Recently finished</div>
+              <div className="cardGrid" style={styles.cardGrid}>
+                {books.filter(b => b.status === "Read").slice().sort((a, b) => (b.yearCompleted || 0) - (a.yearCompleted || 0) || (b.monthCompleted || 0) - (a.monthCompleted || 0)).slice(0, 4).map(b => (
+                  <BookCard key={b.id} book={b} onStatusChange={updateStatus} onDelete={deleteBook} onOpenEdit={setEditingBook} />
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {tab === "tbr" && (
+          <div>
+            <div style={styles.toolbar}>
+              <div style={styles.searchWrap}>
+                <Search size={14} color="#8B8676" />
+                <input style={styles.searchInput} placeholder="Search title, author, series…" value={tbrSearch} onChange={e => setTbrSearch(e.target.value)} />
+              </div>
+              <div style={styles.filterRow}>
+                <select style={styles.select} value={tbrGenre} onChange={e => setTbrGenre(e.target.value)}>
+                  <option>All</option>
+                  {genres.map(g => <option key={g}>{g}</option>)}
+                </select>
+                <select style={styles.select} value={tbrSort} onChange={e => setTbrSort(e.target.value)}>
+                  <option value="priority">Sort: What to read next</option>
+                  <option value="continuing">Sort: Continuing a series</option>
+                  <option value="pages">Sort: Shortest first</option>
+                  <option value="added">Sort: Recently added</option>
+                  <option value="title">Sort: Title</option>
+                  <option value="author">Sort: Author</option>
+                  <option value="series">Sort: Series</option>
+                </select>
+              </div>
+              <button style={styles.addBtn} onClick={() => setShowAdd(true)}><Plus size={14} /> Add a book</button>
+            </div>
+            <div style={styles.countLine}>
+              {tbrBooks.length} book{tbrBooks.length !== 1 ? "s" : ""} on the shelf
+              {tbrSort === "priority" && " — use the arrows to rank what you want to read next"}
+            </div>
+            <div className="cardGrid" style={styles.cardGrid}>
+              {tbrBooks.map((b, i) => (
+                <BookCard
+                  key={b.id}
+                  book={b}
+                  onStatusChange={updateStatus}
+                  onDelete={deleteBook}
+                  reorder={tbrSort === "priority"}
+                  rank={i + 1}
+                  onMoveUp={id => moveInQueue(id, "up")}
+                  onMoveDown={id => moveInQueue(id, "down")}
+                  onSetRank={setRankDirect}
+                  canMoveUp={i > 0}
+                  canMoveDown={i < tbrBooks.length - 1}
+                  onOpenEdit={setEditingBook}
+                />
+              ))}
+            </div>
+            {tbrBooks.length === 0 && <div style={styles.emptyState}>Nothing here. Add a book to start your queue.</div>}
+          </div>
+        )}
+
+        {tab === "library" && (
+          <div>
+            <div style={styles.toolbar}>
+              <div style={styles.searchWrap}>
+                <Search size={14} color="#8B8676" />
+                <input style={styles.searchInput} placeholder="Search your library…" value={libSearch} onChange={e => setLibSearch(e.target.value)} />
+              </div>
+              <div style={styles.filterRow}>
+                <select style={styles.select} value={libStatusFilter} onChange={e => setLibStatusFilter(e.target.value)}>
+                  <option value="All">All statuses</option>
+                  <option value="In Progress">Currently Reading</option>
+                  <option value="Read">Read</option>
+                  <option value="DNF">Did Not Finish</option>
+                </select>
+                <select style={styles.select} value={libGroupBy} onChange={e => setLibGroupBy(e.target.value)}>
+                  <option value="year">Group by: Year</option>
+                  <option value="status">Group by: Status</option>
+                </select>
+                <select style={styles.select} value={libSort} onChange={e => setLibSort(e.target.value)}>
+                  <option value="finish">Sort within group: Finish date</option>
+                  <option value="title">Sort within group: Title</option>
+                  <option value="author">Sort within group: Author</option>
+                  <option value="pages">Sort within group: Pages</option>
+                </select>
+              </div>
+            </div>
+            {libraryGroups.map(([groupKey, list]) => {
+              const expanded = expandedYears.has(groupKey) || libSearch.trim() !== "" || libStatusFilter !== "All";
+              return (
+                <div key={groupKey} style={styles.yearGroup}>
+                  <button style={styles.yearHeader} onClick={() => setExpandedYears(prev => { const n = new Set(prev); n.has(groupKey) ? n.delete(groupKey) : n.add(groupKey); return n; })}>
+                    {expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                    <span style={styles.yearHeaderText}>{groupKey}</span>
+                    <span style={styles.yearHeaderCount}>{list.length} book{list.length !== 1 ? "s" : ""}</span>
+                  </button>
+                  {expanded && (
+                    <div className="cardGrid" style={styles.cardGrid}>
+                      {list.map(b => <BookCard key={b.id} book={b} onStatusChange={updateStatus} onDelete={deleteBook} onOpenEdit={setEditingBook} />)}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            {libraryGroups.length === 0 && <div style={styles.emptyState}>Nothing matches yet.</div>}
+          </div>
+        )}
+
+        {tab === "series" && (
+          <div>
+            <div style={styles.toolbar}>
+              <div style={styles.searchWrap}>
+                <Search size={14} color="#8B8676" />
+                <input style={styles.searchInput} placeholder="Search series or author…" value={seriesSearch} onChange={e => setSeriesSearch(e.target.value)} />
+              </div>
+              <select style={styles.select} value={seriesStatusFilter} onChange={e => setSeriesStatusFilter(e.target.value)}>
+                <option value="All">All statuses</option>
+                <option value="Reading">Currently reading</option>
+                <option value="Started">Started</option>
+                <option value="Caught up">Caught up</option>
+                <option value="Not started">Not started</option>
+                <option value="Complete">Complete</option>
+                <option value="DNF">DNF</option>
+              </select>
+            </div>
+            <div style={styles.countLine}>{filteredSeries.length} series tracked</div>
+            <div style={styles.seriesList}>
+              {filteredSeries.map(s => {
+                const pct = s.totalBooks ? Math.min(100, Math.round((s.readCount / s.totalBooks) * 100)) : 0;
+                const cfg = {
+                  "Reading": "#B8874A",
+                  "Started": "#8A7CB0",
+                  "Caught up": "#4C7A5D",
+                  "Complete": "#4C7A5D",
+                  "Not started": "#8B8676",
+                  "DNF": "#A13D2D",
+                }[s.status] || "#8B8676";
+                return (
+                  <div key={s.name} style={styles.seriesRow}>
+                    <div style={styles.seriesRowTop}>
+                      <span style={styles.seriesName}>{s.name}</span>
+                      <span style={{ ...styles.stamp, color: cfg, borderColor: cfg }}>{s.status.toUpperCase()}</span>
+                    </div>
+                    <div style={styles.seriesAuthor}>{s.author || "Unknown author"}{s.ongoing ? " · ongoing" : ""}</div>
+                    <div style={styles.seriesProgressRow}>
+                      <div style={styles.seriesProgressTrack}>
+                        <div style={{ ...styles.seriesProgressFill, width: `${pct}%`, background: cfg }} />
+                      </div>
+                      <span style={styles.seriesProgressLabel}>{s.readCount} / {s.totalBooks}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {filteredSeries.length === 0 && <div style={styles.emptyState}>No series match yet.</div>}
+          </div>
+        )}
+
+        {tab === "stats" && (
+          <div>
+            <div style={styles.sectionTitle}>Year over year</div>
+            <div style={styles.tableWrap}>
+              <table style={styles.table}>
+                <thead>
+                  <tr>
+                    <th style={styles.th}>Year</th>
+                    <th style={styles.th}>Goal</th>
+                    <th style={styles.th}>Read</th>
+                    <th style={styles.th}>% of goal</th>
+                    <th style={styles.th}>Pages</th>
+                    <th style={styles.th}>Audio hrs</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {allYears.map(y => {
+                    const s = yearStats[y] || { read: 0, pages: 0, audio: 0 };
+                    const g = Number(goals[y]) || 0;
+                    const pct = g ? Math.round((s.read / g) * 100) : null;
+                    return (
+                      <tr key={y} style={y === currentYear ? styles.trCurrent : undefined}>
+                        <td style={styles.td}>{y}</td>
+                        <td style={styles.td}>{g || "—"}</td>
+                        <td style={styles.td}>{s.read}</td>
+                        <td style={styles.td}>{pct !== null ? `${pct}%` : "—"}</td>
+                        <td style={styles.td}>{Math.round(s.pages).toLocaleString()}</td>
+                        <td style={styles.td}>{s.audio.toFixed(1)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            <div style={styles.sectionBlock}>
+              <div style={styles.sectionTitle}>Books finished per year</div>
+              <div style={styles.barChart}>
+                {allYears.slice().reverse().map(y => {
+                  const s = yearStats[y] || { read: 0 };
+                  const max = Math.max(1, ...allYears.map(yy => (yearStats[yy] || { read: 0 }).read));
+                  const h = Math.max(2, (s.read / max) * 100);
+                  return (
+                    <div key={y} style={styles.barCol}>
+                      <div style={styles.barTrack}>
+                        <div style={{ ...styles.bar, height: `${h}%` }} title={`${s.read} books`} />
+                      </div>
+                      <div style={styles.barLabel}>{String(y).slice(2)}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {tab === "goals" && (
+          <div>
+            <div style={styles.sectionTitle}>Reading goals by year</div>
+            <div style={styles.goalsList}>
+              {allYears.map(y => (
+                <div key={y} style={styles.goalRow}>
+                  <span style={styles.goalYear}>{y}</span>
+                  <input
+                    style={styles.goalInput}
+                    type="number"
+                    min="0"
+                    value={goals[y] ?? ""}
+                    onChange={e => updateGoal(y, e.target.value)}
+                    placeholder="0"
+                  />
+                  <span style={styles.goalSuffix}>books</span>
+                  <span style={styles.goalActual}>{(yearStats[y] || { read: 0 }).read} read so far</span>
+                </div>
+              ))}
+              <button
+                style={styles.addYearBtn}
+                onClick={() => {
+                  const nextYear = Math.max(...allYears) + 1;
+                  updateGoal(nextYear, 0);
+                }}
+              >
+                <Plus size={14} /> Add next year
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {showAdd && (
+        <div style={styles.modalOverlay} onClick={() => setShowAdd(false)}>
+          <div style={styles.modal} onClick={e => e.stopPropagation()}>
+            <div style={styles.modalHeader}>
+              <span>Add a book</span>
+              <button style={styles.closeBtn} onClick={() => setShowAdd(false)}><X size={16} /></button>
+            </div>
+
+            <label style={styles.label}>Title</label>
+            <input style={styles.input} value={newBook.title} onChange={e => setNewBook({ ...newBook, title: e.target.value })} placeholder="e.g. The Name of the Wind" />
+
+            <label style={styles.label}>Author</label>
+            <input style={styles.input} value={newBook.author} onChange={e => setNewBook({ ...newBook, author: e.target.value })} placeholder="optional — lookup can fill this in" />
+
+            <button style={styles.lookupBtn} onClick={lookupDetails} disabled={lookupLoading}>
+              {lookupLoading ? <Loader2 size={14} className="spin" /> : <Sparkles size={14} />}
+              {lookupLoading ? "Searching the web…" : "Look up details"}
+            </button>
+            {lookupError && <div style={styles.lookupError}>{lookupError}</div>}
+            {lookupDone && !lookupError && <div style={styles.lookupSuccess}>Filled in from web search — check it over below.</div>}
+
+            <div style={styles.gridTwo}>
+              <div>
+                <label style={styles.label}>Series</label>
+                <input style={styles.input} value={newBook.series} onChange={e => setNewBook({ ...newBook, series: e.target.value })} />
+              </div>
+              <div>
+                <label style={styles.label}>Series #</label>
+                <input style={styles.input} type="number" value={newBook.seriesNum} onChange={e => setNewBook({ ...newBook, seriesNum: e.target.value })} />
+              </div>
+            </div>
+            <div style={styles.gridTwo}>
+              <div>
+                <label style={styles.label}>Pages</label>
+                <input style={styles.input} type="number" value={newBook.pages} onChange={e => setNewBook({ ...newBook, pages: e.target.value })} />
+              </div>
+              <div>
+                <label style={styles.label}>Audio hours</label>
+                <input style={styles.input} type="number" step="0.1" value={newBook.audioHours} onChange={e => setNewBook({ ...newBook, audioHours: e.target.value })} />
+              </div>
+            </div>
+            <label style={styles.label}>Genre</label>
+            <input style={styles.input} value={newBook.genre} onChange={e => setNewBook({ ...newBook, genre: e.target.value })} placeholder="e.g. Fantasy" />
+
+            <label style={styles.label}>Status</label>
+            <select style={styles.input} value={newBook.status} onChange={e => setNewBook({ ...newBook, status: e.target.value })}>
+              <option value="TBR">To Be Read</option>
+              <option value="In Progress">Currently Reading</option>
+              <option value="Read">Read</option>
+              <option value="DNF">Did Not Finish</option>
+            </select>
+
+            <button style={styles.saveBtn} onClick={addBook}>Add to catalog</button>
+          </div>
+        </div>
+      )}
+
+      {editingBook && editDraft && (
+        <div style={styles.modalOverlay} onClick={() => setEditingBook(null)}>
+          <div style={styles.modal} onClick={e => e.stopPropagation()}>
+            <div style={styles.modalHeader}>
+              <span>Edit entry</span>
+              <button style={styles.closeBtn} onClick={() => setEditingBook(null)}><X size={16} /></button>
+            </div>
+
+            <label style={styles.label}>Title</label>
+            <input style={styles.input} value={editDraft.title} onChange={e => setEditDraft({ ...editDraft, title: e.target.value })} />
+
+            <label style={styles.label}>Author</label>
+            <input style={styles.input} value={editDraft.author} onChange={e => setEditDraft({ ...editDraft, author: e.target.value })} />
+
+            <button style={styles.lookupBtn} onClick={lookupEditDetails} disabled={editLookupLoading}>
+              {editLookupLoading ? <Loader2 size={14} className="spin" /> : <Sparkles size={14} />}
+              {editLookupLoading ? "Searching the web…" : "Look up details"}
+            </button>
+            {editLookupError && <div style={styles.lookupError}>{editLookupError}</div>}
+            {editLookupDone && !editLookupError && <div style={styles.lookupSuccess}>Filled in from web search — check it over below.</div>}
+
+            <div style={styles.gridTwo}>
+              <div>
+                <label style={styles.label}>Series</label>
+                <input style={styles.input} value={editDraft.series} onChange={e => setEditDraft({ ...editDraft, series: e.target.value })} />
+              </div>
+              <div>
+                <label style={styles.label}>Series #</label>
+                <input style={styles.input} type="number" value={editDraft.seriesNum} onChange={e => setEditDraft({ ...editDraft, seriesNum: e.target.value })} />
+              </div>
+            </div>
+            <div style={styles.gridTwo}>
+              <div>
+                <label style={styles.label}>Pages</label>
+                <input style={styles.input} type="number" value={editDraft.pages} onChange={e => setEditDraft({ ...editDraft, pages: e.target.value })} />
+              </div>
+              <div>
+                <label style={styles.label}>Audio hours</label>
+                <input style={styles.input} type="number" step="0.1" value={editDraft.audioHours} onChange={e => setEditDraft({ ...editDraft, audioHours: e.target.value })} />
+              </div>
+            </div>
+            <label style={styles.label}>Genre</label>
+            <input style={styles.input} value={editDraft.genre} onChange={e => setEditDraft({ ...editDraft, genre: e.target.value })} />
+
+            <label style={styles.label}>Status</label>
+            <select style={styles.input} value={editDraft.status} onChange={e => setEditDraft({ ...editDraft, status: e.target.value })}>
+              <option value="TBR">To Be Read</option>
+              <option value="In Progress">Currently Reading</option>
+              <option value="Read">Read</option>
+              <option value="DNF">Did Not Finish</option>
+            </select>
+
+            <div style={styles.gridTwo}>
+              <div>
+                <label style={styles.label}>Date started</label>
+                <input style={styles.input} type="date" value={editDraft.dateStarted} onChange={e => setEditDraft({ ...editDraft, dateStarted: e.target.value })} />
+              </div>
+              <div>
+                <label style={styles.label}>Date finished</label>
+                <input style={styles.input} type="date" value={editDraft.dateCompleted} onChange={e => setEditDraft({ ...editDraft, dateCompleted: e.target.value })} />
+              </div>
+            </div>
+
+            <button style={styles.saveBtn} onClick={saveEdit}>Save changes</button>
+            <button
+              style={styles.deleteEntryBtn}
+              onClick={() => { deleteBook(editingBook.id); setEditingBook(null); }}
+            >
+              <Trash2 size={13} /> Remove from catalog
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const styles = {
+  app: {
+    minHeight: "100vh",
+    background: "radial-gradient(ellipse at top, #1c2f26 0%, #131f19 60%, #0f1813 100%)",
+    color: "#C9C2AC",
+    fontFamily: "'Inter', sans-serif",
+    padding: "24px 20px 60px",
+  },
+  loadingScreen: {
+    minHeight: "100vh",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "#131f19",
+    color: "#B8874A",
+  },
+  headerBar: {
+    maxWidth: 1000,
+    margin: "0 auto 18px",
+    borderBottom: "1px solid rgba(184,135,74,0.25)",
+    paddingBottom: 16,
+  },
+  headerBarInner: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: 12,
+    flexWrap: "wrap",
+  },
+  accountRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+  },
+  accountEmail: {
+    fontSize: 11.5,
+    color: "#8B8676",
+    fontFamily: "'JetBrains Mono', monospace",
+  },
+  signOutBtn: {
+    background: "transparent",
+    border: "1px solid rgba(201,194,172,0.25)",
+    color: "#9a9482",
+    borderRadius: 3,
+    padding: "6px 10px",
+    fontSize: 11.5,
+    cursor: "pointer",
+  },
+  brand: {
+    fontFamily: "'Fraunces', serif",
+    fontStyle: "italic",
+    fontWeight: 600,
+    fontSize: 34,
+    color: "#EFE7D2",
+    letterSpacing: 0.3,
+  },
+  brandSub: {
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: 11.5,
+    letterSpacing: 0.5,
+    color: "#8B8676",
+    marginTop: 4,
+    textTransform: "uppercase",
+  },
+  tabRow: {
+    maxWidth: 1000,
+    margin: "0 auto 26px",
+    display: "flex",
+    gap: 6,
+    flexWrap: "wrap",
+  },
+  tabBtn: {
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    background: "transparent",
+    border: "1px solid rgba(201,194,172,0.18)",
+    color: "#9a9482",
+    fontSize: 12.5,
+    letterSpacing: 0.4,
+    padding: "8px 14px",
+    borderRadius: 3,
+    cursor: "pointer",
+    textTransform: "uppercase",
+    fontFamily: "'Inter', sans-serif",
+  },
+  tabBtnActive: {
+    background: "rgba(184,135,74,0.14)",
+    borderColor: "#B8874A",
+    color: "#EFE7D2",
+  },
+  content: {
+    maxWidth: 1000,
+    margin: "0 auto",
+  },
+  dashHero: {
+    textAlign: "center",
+    padding: "30px 10px 26px",
+    borderBottom: "1px dashed rgba(201,194,172,0.2)",
+    marginBottom: 26,
+  },
+  heroNumber: {
+    fontFamily: "'Fraunces', serif",
+    fontWeight: 700,
+    fontSize: 64,
+    color: "#EFE7D2",
+    lineHeight: 1,
+  },
+  heroOf: {
+    fontSize: 28,
+    color: "#8B8676",
+    fontWeight: 400,
+  },
+  heroLabel: {
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: 12,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    color: "#8B8676",
+    marginTop: 8,
+  },
+  shelf: {
+    display: "flex",
+    gap: 3,
+    justifyContent: "center",
+    flexWrap: "wrap",
+    maxWidth: 560,
+    margin: "18px auto 0",
+  },
+  tick: {
+    width: 7,
+    height: 22,
+    borderRadius: 1,
+  },
+  heroSub: {
+    marginTop: 14,
+    fontSize: 12.5,
+    color: "#B8874A",
+    fontFamily: "'JetBrains Mono', monospace",
+  },
+  statGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(4, 1fr)",
+    gap: 12,
+    marginBottom: 30,
+  },
+  statBlock: {
+    border: "1px solid rgba(201,194,172,0.14)",
+    borderRadius: 4,
+    padding: "16px 14px",
+    textAlign: "center",
+    background: "rgba(239,231,210,0.02)",
+  },
+  statValue: {
+    fontFamily: "'Fraunces', serif",
+    fontWeight: 600,
+    fontSize: 26,
+    color: "#EFE7D2",
+  },
+  statLabel: {
+    fontSize: 11,
+    color: "#8B8676",
+    marginTop: 4,
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+  },
+  statSub: {
+    fontSize: 10.5,
+    color: "#6E7F52",
+    marginTop: 2,
+  },
+  sectionBlock: {
+    marginBottom: 32,
+  },
+  sectionTitle: {
+    fontFamily: "'Fraunces', serif",
+    fontStyle: "italic",
+    fontSize: 19,
+    color: "#EFE7D2",
+    marginBottom: 14,
+  },
+  cardGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))",
+    gap: 12,
+  },
+  card: {
+    background: "#EFE7D2",
+    color: "#2A2118",
+    borderRadius: 3,
+    padding: "14px 14px 12px",
+    boxShadow: "0 3px 10px rgba(0,0,0,0.25)",
+    display: "flex",
+    flexDirection: "column",
+    gap: 4,
+    position: "relative",
+    cursor: "pointer",
+  },
+  cardTopRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 2,
+  },
+  reorderRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 6,
+    paddingBottom: 6,
+    borderBottom: "1px dashed rgba(42,33,24,0.15)",
+  },
+  rankBadge: {
+    fontFamily: "'Fraunces', serif",
+    fontWeight: 700,
+    fontSize: 13,
+    color: "#B8874A",
+    background: "rgba(184,135,74,0.12)",
+    padding: "1px 8px",
+    borderRadius: 10,
+    cursor: "pointer",
+  },
+  rankInput: {
+    width: 44,
+    fontFamily: "'Fraunces', serif",
+    fontWeight: 700,
+    fontSize: 13,
+    color: "#2A2118",
+    background: "#fff",
+    border: "1px solid #B8874A",
+    borderRadius: 10,
+    padding: "1px 6px",
+  },
+  reorderBtns: {
+    display: "flex",
+    gap: 4,
+  },
+  reorderBtn: {
+    width: 24,
+    height: 24,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "#2A2118",
+    color: "#EFE7D2",
+    border: "none",
+    borderRadius: 3,
+    cursor: "pointer",
+    fontSize: 13,
+    lineHeight: 1,
+    padding: 0,
+  },
+  callNumber: {
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: 10,
+    color: "#8A7A5C",
+    letterSpacing: 0.3,
+  },
+  stamp: {
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: 9.5,
+    fontWeight: 600,
+    letterSpacing: 1,
+    border: "1.5px solid",
+    borderRadius: 2,
+    padding: "1px 6px",
+    transform: "rotate(-2deg)",
+  },
+  cardTitle: {
+    fontFamily: "'Fraunces', serif",
+    fontWeight: 600,
+    fontSize: 16.5,
+    lineHeight: 1.25,
+    color: "#231B12",
+  },
+  cardAuthor: {
+    fontSize: 12.5,
+    fontStyle: "italic",
+    color: "#5A4E38",
+  },
+  cardSeries: {
+    fontSize: 11.5,
+    color: "#7A6B4C",
+  },
+  cardMetaRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    flexWrap: "wrap",
+    marginTop: 4,
+  },
+  metaItem: {
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: 10.5,
+    color: "#5A4E38",
+    background: "rgba(42,33,24,0.06)",
+    padding: "2px 6px",
+    borderRadius: 2,
+  },
+  genreTag: {
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: 10,
+    padding: "2px 6px",
+    borderRadius: 2,
+    border: "1px solid",
+    background: "rgba(255,255,255,0.4)",
+  },
+  cardCompleted: {
+    fontSize: 10.5,
+    color: "#6E7F52",
+    fontFamily: "'JetBrains Mono', monospace",
+    marginTop: 2,
+  },
+  quoteToggle: {
+    background: "none",
+    border: "none",
+    color: "#8A7A5C",
+    fontSize: 10.5,
+    display: "flex",
+    alignItems: "center",
+    gap: 4,
+    cursor: "pointer",
+    padding: "3px 0",
+  },
+  quoteBlock: {
+    fontSize: 11.5,
+    fontStyle: "italic",
+    color: "#4A4030",
+    background: "rgba(42,33,24,0.06)",
+    padding: "8px 10px",
+    borderRadius: 2,
+    marginTop: 2,
+  },
+  cardActions: {
+    display: "flex",
+    gap: 6,
+    marginTop: 8,
+    flexWrap: "wrap",
+  },
+  actionBtn: {
+    display: "flex",
+    alignItems: "center",
+    gap: 4,
+    fontSize: 11,
+    background: "#2A2118",
+    color: "#EFE7D2",
+    border: "none",
+    borderRadius: 2,
+    padding: "5px 8px",
+    cursor: "pointer",
+  },
+  actionBtnMuted: {
+    display: "flex",
+    alignItems: "center",
+    gap: 4,
+    fontSize: 11,
+    background: "transparent",
+    color: "#A13D2D",
+    border: "1px solid #A13D2D",
+    borderRadius: 2,
+    padding: "5px 8px",
+    cursor: "pointer",
+  },
+  deleteBtn: {
+    marginLeft: "auto",
+    background: "transparent",
+    border: "none",
+    color: "#8A7A5C",
+    cursor: "pointer",
+    padding: "5px 6px",
+  },
+  toolbar: {
+    display: "flex",
+    gap: 8,
+    flexWrap: "wrap",
+    marginBottom: 14,
+    alignItems: "center",
+  },
+  filterRow: {
+    display: "flex",
+    gap: 8,
+    flexWrap: "wrap",
+    alignItems: "center",
+  },
+  searchWrap: {
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    background: "rgba(239,231,210,0.05)",
+    border: "1px solid rgba(201,194,172,0.18)",
+    borderRadius: 3,
+    padding: "7px 10px",
+    flex: "1 1 200px",
+  },
+  searchInput: {
+    background: "transparent",
+    border: "none",
+    color: "#EFE7D2",
+    fontSize: 13,
+    width: "100%",
+  },
+  select: {
+    background: "rgba(239,231,210,0.05)",
+    border: "1px solid rgba(201,194,172,0.18)",
+    color: "#C9C2AC",
+    borderRadius: 3,
+    padding: "7px 8px",
+    fontSize: 12.5,
+  },
+  addBtn: {
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    background: "#B8874A",
+    color: "#1a140c",
+    border: "none",
+    borderRadius: 3,
+    padding: "8px 14px",
+    fontSize: 12.5,
+    fontWeight: 600,
+    cursor: "pointer",
+  },
+  countLine: {
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: 11,
+    color: "#8B8676",
+    marginBottom: 12,
+  },
+  emptyState: {
+    textAlign: "center",
+    padding: "40px 0",
+    color: "#8B8676",
+    fontStyle: "italic",
+    fontFamily: "'Fraunces', serif",
+    fontSize: 15,
+  },
+  yearGroup: {
+    marginBottom: 10,
+    borderBottom: "1px solid rgba(201,194,172,0.1)",
+    paddingBottom: 12,
+  },
+  yearHeader: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    background: "none",
+    border: "none",
+    color: "#EFE7D2",
+    cursor: "pointer",
+    padding: "10px 0",
+    width: "100%",
+    textAlign: "left",
+  },
+  yearHeaderText: {
+    fontFamily: "'Fraunces', serif",
+    fontSize: 18,
+    fontWeight: 600,
+  },
+  yearHeaderCount: {
+    marginLeft: "auto",
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: 11,
+    color: "#8B8676",
+  },
+  tableWrap: {
+    overflowX: "auto",
+    marginBottom: 20,
+  },
+  table: {
+    width: "100%",
+    borderCollapse: "collapse",
+    fontSize: 13,
+  },
+  th: {
+    textAlign: "left",
+    padding: "8px 10px",
+    borderBottom: "1px solid rgba(184,135,74,0.4)",
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: 10.5,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    color: "#8B8676",
+  },
+  td: {
+    padding: "8px 10px",
+    borderBottom: "1px solid rgba(201,194,172,0.08)",
+    fontFamily: "'JetBrains Mono', monospace",
+  },
+  trCurrent: {
+    background: "rgba(184,135,74,0.08)",
+  },
+  barChart: {
+    display: "flex",
+    alignItems: "flex-end",
+    gap: 10,
+    height: 140,
+    padding: "10px 4px 0",
+    overflowX: "auto",
+  },
+  barCol: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 6,
+    minWidth: 26,
+  },
+  barTrack: {
+    height: 110,
+    width: 16,
+    display: "flex",
+    alignItems: "flex-end",
+  },
+  bar: {
+    width: "100%",
+    background: "linear-gradient(180deg, #B8874A, #7A5C33)",
+    borderRadius: "2px 2px 0 0",
+  },
+  barLabel: {
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: 10,
+    color: "#8B8676",
+  },
+  seriesList: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 10,
+  },
+  seriesRow: {
+    border: "1px solid rgba(201,194,172,0.14)",
+    borderRadius: 4,
+    padding: "12px 14px",
+    background: "rgba(239,231,210,0.02)",
+  },
+  seriesRowTop: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 10,
+  },
+  seriesName: {
+    fontFamily: "'Fraunces', serif",
+    fontWeight: 600,
+    fontSize: 16,
+    color: "#EFE7D2",
+  },
+  seriesAuthor: {
+    fontSize: 12,
+    fontStyle: "italic",
+    color: "#8B8676",
+    marginTop: 2,
+  },
+  seriesProgressRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    marginTop: 8,
+  },
+  seriesProgressTrack: {
+    flex: 1,
+    height: 6,
+    borderRadius: 3,
+    background: "rgba(201,194,172,0.12)",
+    overflow: "hidden",
+  },
+  seriesProgressFill: {
+    height: "100%",
+    borderRadius: 3,
+  },
+  seriesProgressLabel: {
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: 11,
+    color: "#8B8676",
+    minWidth: 42,
+    textAlign: "right",
+  },
+  goalsList: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 8,
+    maxWidth: 480,
+  },
+  goalRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    border: "1px solid rgba(201,194,172,0.14)",
+    borderRadius: 3,
+    padding: "10px 12px",
+  },
+  goalYear: {
+    fontFamily: "'Fraunces', serif",
+    fontSize: 16,
+    fontWeight: 600,
+    color: "#EFE7D2",
+    width: 50,
+  },
+  goalInput: {
+    width: 70,
+    background: "rgba(239,231,210,0.05)",
+    border: "1px solid rgba(201,194,172,0.2)",
+    color: "#EFE7D2",
+    borderRadius: 3,
+    padding: "6px 8px",
+    fontFamily: "'JetBrains Mono', monospace",
+  },
+  goalSuffix: {
+    fontSize: 11.5,
+    color: "#8B8676",
+  },
+  goalActual: {
+    marginLeft: "auto",
+    fontSize: 11.5,
+    color: "#6E7F52",
+    fontFamily: "'JetBrains Mono', monospace",
+  },
+  addYearBtn: {
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    background: "transparent",
+    border: "1px dashed rgba(184,135,74,0.5)",
+    color: "#B8874A",
+    borderRadius: 3,
+    padding: "9px 12px",
+    fontSize: 12.5,
+    cursor: "pointer",
+    marginTop: 4,
+  },
+  modalOverlay: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(10,15,12,0.7)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 16,
+    zIndex: 50,
+  },
+  modal: {
+    background: "#1c2f26",
+    border: "1px solid rgba(184,135,74,0.3)",
+    borderRadius: 6,
+    padding: 22,
+    width: "100%",
+    maxWidth: 420,
+    maxHeight: "88vh",
+    overflowY: "auto",
+  },
+  modalHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    fontFamily: "'Fraunces', serif",
+    fontStyle: "italic",
+    fontSize: 20,
+    color: "#EFE7D2",
+    marginBottom: 16,
+  },
+  closeBtn: {
+    background: "none",
+    border: "none",
+    color: "#8B8676",
+    cursor: "pointer",
+  },
+  label: {
+    display: "block",
+    fontSize: 10.5,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    color: "#8B8676",
+    marginBottom: 4,
+    marginTop: 12,
+    fontFamily: "'JetBrains Mono', monospace",
+  },
+  input: {
+    width: "100%",
+    background: "rgba(239,231,210,0.06)",
+    border: "1px solid rgba(201,194,172,0.2)",
+    color: "#EFE7D2",
+    borderRadius: 3,
+    padding: "8px 10px",
+    fontSize: 13.5,
+  },
+  gridTwo: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: 10,
+  },
+  lookupBtn: {
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    justifyContent: "center",
+    width: "100%",
+    background: "rgba(184,135,74,0.15)",
+    border: "1px solid #B8874A",
+    color: "#EFE7D2",
+    borderRadius: 3,
+    padding: "9px 10px",
+    fontSize: 12.5,
+    cursor: "pointer",
+    marginTop: 14,
+  },
+  lookupError: {
+    fontSize: 11.5,
+    color: "#C97A63",
+    marginTop: 8,
+  },
+  lookupSuccess: {
+    fontSize: 11.5,
+    color: "#8FAF8B",
+    marginTop: 8,
+  },
+  saveBtn: {
+    width: "100%",
+    background: "#B8874A",
+    color: "#1a140c",
+    border: "none",
+    borderRadius: 3,
+    padding: "11px 10px",
+    fontSize: 13.5,
+    fontWeight: 600,
+    cursor: "pointer",
+    marginTop: 20,
+  },
+  deleteEntryBtn: {
+    width: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    background: "transparent",
+    color: "#A13D2D",
+    border: "1px solid #A13D2D",
+    borderRadius: 3,
+    padding: "9px 10px",
+    fontSize: 12.5,
+    cursor: "pointer",
+    marginTop: 10,
+  },
+};
+
+function SignInScreen({ onSignIn, error }) {
+  return (
+    <div style={styles.loadingScreen}>
+      <div style={{ fontFamily: "'Fraunces', serif", fontStyle: "italic", fontWeight: 600, fontSize: 30, color: "#EFE7D2", marginBottom: 6 }}>
+        The Reading Ledger
+      </div>
+      <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "#8B8676", marginBottom: 24, textAlign: "center", maxWidth: 300 }}>
+        sign in to open your catalog — your data is private to your account
+      </div>
+      <button
+        onClick={onSignIn}
+        style={{
+          display: "flex", alignItems: "center", gap: 8,
+          background: "#EFE7D2", color: "#2A2118", border: "none",
+          borderRadius: 4, padding: "10px 18px", fontSize: 14, fontWeight: 600, cursor: "pointer",
+        }}
+      >
+        Sign in with Google
+      </button>
+      {error && <div style={{ color: "#C97A63", fontSize: 12, marginTop: 14 }}>{error}</div>}
+    </div>
+  );
+}
+
+function App() {
+  const [authLoading, setAuthLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const [authError, setAuthError] = useState("");
+
+  useEffect(() => {
+    const unsub = firebase.auth().onAuthStateChanged(u => {
+      setUser(u);
+      setAuthLoading(false);
+    });
+    return () => unsub();
+  }, []);
+
+  function handleSignIn() {
+    setAuthError("");
+    const provider = new firebase.auth.GoogleAuthProvider();
+    firebase.auth().signInWithPopup(provider).catch(e => setAuthError(e.message));
+  }
+
+  function handleSignOut() {
+    firebase.auth().signOut();
+  }
+
+  if (authLoading) {
+    return (
+      <div style={styles.loadingScreen}>
+        <Loader2 className="spin" size={28} />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <SignInScreen onSignIn={handleSignIn} error={authError} />;
+  }
+
+  return <ReadingLedger uid={user.uid} email={user.email} onSignOut={handleSignOut} />;
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
+
+  </script>
 </body>
 </html>
