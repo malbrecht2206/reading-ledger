@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Reading Ledger</title>
+  <style>
+    html, body { margin: 0; padding: 0; background: #0f1813; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- React (no build step needed) -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Firebase (compat build - works with plain <script> tags, no bundler required) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <script src="firebase-config.js"></script>
+
+  <!-- The app itself, transformed by Babel right in the browser -->
+  <script type="text/babel" data-presets="react" src="app.jsx"></script>
+</body>
+</html>
