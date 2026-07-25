@@ -1198,6 +1198,15 @@ const styles = {
     background: "#131f19",
     color: "#B8874A",
   },
+  authInput: {
+    width: "100%",
+    background: "rgba(239,231,210,0.08)",
+    border: "1px solid rgba(201,194,172,0.25)",
+    color: "#EFE7D2",
+    borderRadius: 4,
+    padding: "10px 12px",
+    fontSize: 14,
+  },
   headerBar: {
     maxWidth: 1000,
     margin: "0 auto 18px",
@@ -1924,37 +1933,123 @@ const styles = {
   },
 };
 
-function SignInScreen({ onSignIn, error }) {
+function SignInScreen({ onSignIn, onSignUp, onReset, onClearStatus, error, busy, resetSent }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [mode, setMode] = useState("signin");
+
+  function changeMode(next) {
+    onClearStatus();
+    setMode(next);
+  }
+
+  function submit(e) {
+    e.preventDefault();
+    if (mode === "reset") {
+      if (!email.trim()) return;
+      onReset(email.trim());
+      return;
+    }
+    if (!email.trim() || !password) return;
+    if (mode === "signin") onSignIn(email.trim(), password);
+    else onSignUp(email.trim(), password);
+  }
+
+  const subtitle =
+    mode === "signin" ? "sign in to open your catalog" :
+    mode === "signup" ? "create an account to get started" :
+    "reset your password";
+
   return (
     <div style={styles.loadingScreen}>
       <div style={{ fontFamily: "'Fraunces', serif", fontStyle: "italic", fontWeight: 600, fontSize: 30, color: "#EFE7D2", marginBottom: 6 }}>
         The Reading Ledger
       </div>
       <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "#8B8676", marginBottom: 24, textAlign: "center", maxWidth: 300 }}>
-        sign in to open your catalog — your data is private to your account
+        {subtitle}{mode !== "reset" ? " — your data is private to your account" : ""}
       </div>
-      <button
-        onClick={onSignIn}
-        style={{
-          display: "flex", alignItems: "center", gap: 8,
-          background: "#EFE7D2", color: "#2A2118", border: "none",
-          borderRadius: 4, padding: "10px 18px", fontSize: 14, fontWeight: 600, cursor: "pointer",
-        }}
-      >
-        Sign in with Google
-      </button>
-      {error && <div style={{ color: "#C97A63", fontSize: 12, marginTop: 14 }}>{error}</div>}
+
+      {mode === "reset" && resetSent ? (
+        <div style={{ color: "#8FAF8B", fontSize: 13, textAlign: "center", maxWidth: 300, marginBottom: 10 }}>
+          Check your inbox for a link to reset your password.
+        </div>
+      ) : (
+        <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%", maxWidth: 300 }}>
+          <input
+            type="email"
+            autoCapitalize="none"
+            autoComplete="email"
+            placeholder="email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            style={styles.authInput}
+          />
+          {mode !== "reset" && (
+            <input
+              type="password"
+              autoComplete={mode === "signin" ? "current-password" : "new-password"}
+              placeholder="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              style={styles.authInput}
+            />
+          )}
+          <button
+            type="submit"
+            disabled={busy}
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+              background: "#EFE7D2", color: "#2A2118", border: "none",
+              borderRadius: 4, padding: "10px 18px", fontSize: 14, fontWeight: 600, cursor: "pointer",
+              opacity: busy ? 0.6 : 1,
+            }}
+          >
+            {busy ? <Loader2 className="spin" size={14} /> : null}
+            {mode === "signin" ? "Sign in" : mode === "signup" ? "Create account" : "Send reset link"}
+          </button>
+        </form>
+      )}
+
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, marginTop: 16 }}>
+        {mode !== "reset" && (
+          <button
+            onClick={() => changeMode(mode === "signin" ? "signup" : "signin")}
+            style={{ background: "none", border: "none", color: "#8B8676", fontSize: 12, cursor: "pointer", textDecoration: "underline" }}
+          >
+            {mode === "signin" ? "New here? Create an account" : "Already have an account? Sign in"}
+          </button>
+        )}
+        {mode === "signin" && (
+          <button
+            onClick={() => changeMode("reset")}
+            style={{ background: "none", border: "none", color: "#8B8676", fontSize: 12, cursor: "pointer", textDecoration: "underline" }}
+          >
+            Forgot password?
+          </button>
+        )}
+        {mode === "reset" && (
+          <button
+            onClick={() => changeMode("signin")}
+            style={{ background: "none", border: "none", color: "#8B8676", fontSize: 12, cursor: "pointer", textDecoration: "underline" }}
+          >
+            Back to sign in
+          </button>
+        )}
+      </div>
+
+      {error && <div style={{ color: "#C97A63", fontSize: 12, marginTop: 14, textAlign: "center", maxWidth: 300 }}>{error}</div>}
     </div>
   );
 }
 
 function App() {
   const [authLoading, setAuthLoading] = useState(true);
+  const [authBusy, setAuthBusy] = useState(false);
   const [user, setUser] = useState(null);
   const [authError, setAuthError] = useState("");
+  const [resetSent, setResetSent] = useState(false);
 
   useEffect(() => {
-    firebase.auth().getRedirectResult().catch(e => setAuthError(e.message));
     const unsub = firebase.auth().onAuthStateChanged(u => {
       setUser(u);
       setAuthLoading(false);
@@ -1962,14 +2057,39 @@ function App() {
     return () => unsub();
   }, []);
 
-  function handleSignIn() {
+  function handleSignIn(email, password) {
     setAuthError("");
-    const provider = new firebase.auth.GoogleAuthProvider();
-    firebase.auth().signInWithRedirect(provider);
+    setAuthBusy(true);
+    firebase.auth().signInWithEmailAndPassword(email, password)
+      .catch(e => setAuthError(e.message))
+      .finally(() => setAuthBusy(false));
+  }
+
+  function handleSignUp(email, password) {
+    setAuthError("");
+    setAuthBusy(true);
+    firebase.auth().createUserWithEmailAndPassword(email, password)
+      .catch(e => setAuthError(e.message))
+      .finally(() => setAuthBusy(false));
+  }
+
+  function handleReset(email) {
+    setAuthError("");
+    setResetSent(false);
+    setAuthBusy(true);
+    firebase.auth().sendPasswordResetEmail(email)
+      .then(() => setResetSent(true))
+      .catch(e => setAuthError(e.message))
+      .finally(() => setAuthBusy(false));
   }
 
   function handleSignOut() {
     firebase.auth().signOut();
+  }
+
+  function clearAuthStatus() {
+    setAuthError("");
+    setResetSent(false);
   }
 
   if (authLoading) {
@@ -1981,7 +2101,17 @@ function App() {
   }
 
   if (!user) {
-    return <SignInScreen onSignIn={handleSignIn} error={authError} />;
+    return (
+      <SignInScreen
+        onSignIn={handleSignIn}
+        onSignUp={handleSignUp}
+        onReset={handleReset}
+        onClearStatus={clearAuthStatus}
+        error={authError}
+        busy={authBusy}
+        resetSent={resetSent}
+      />
+    );
   }
 
   return <ReadingLedger uid={user.uid} email={user.email} onSignOut={handleSignOut} />;
