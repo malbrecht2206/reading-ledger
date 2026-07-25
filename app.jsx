@@ -200,28 +200,31 @@ function BookCard({ book, onStatusChange, onDelete, reorder, rank, onMoveUp, onM
       )}
       <div style={styles.cardTopRow}>
         <span style={styles.callNumber}>{callNumber(book)}</span>
-        <StatusStamp status={book.status} />
       </div>
       <div style={styles.cardTitle}>{book.title}</div>
       <div style={styles.cardAuthor}>{book.author || "Unknown author"}</div>
-      {book.series && (
-        <div style={styles.cardSeries}>
-          {book.series}{book.seriesNum ? ` · Book ${book.seriesNum}` : ""}
-        </div>
-      )}
+
+      <div style={styles.cardSeries}>
+        {book.series ? `${book.series}${book.seriesNum ? ` · Book ${book.seriesNum}` : ""}` : "\u00A0"}
+      </div>
+
       <div style={styles.cardMetaRow}>
         {book.pages ? <span style={styles.metaItem}>{Math.round(book.pages)}p</span> : null}
         {audio ? <span style={styles.metaItem}>{audio} audio</span> : null}
         <GenreTag genre={book.genre} />
       </div>
-      {book.dateStarted && book.status === "In Progress" && (
-        <div style={styles.cardCompleted}>Started {book.dateStarted}</div>
-      )}
-      {book.yearCompleted && (
+
+      <div style={styles.cardDatesSlot}>
         <div style={styles.cardCompleted}>
-          Finished {book.dateCompleted ? book.dateCompleted : (book.monthCompleted ? monthName(book.monthCompleted) + " " + book.yearCompleted : book.yearCompleted)}
+          {book.dateStarted ? `Started ${book.dateStarted}` : "\u00A0"}
         </div>
-      )}
+        <div style={styles.cardCompleted}>
+          {book.yearCompleted
+            ? `Finished ${book.dateCompleted ? book.dateCompleted : (book.monthCompleted ? monthName(book.monthCompleted) + " " + book.yearCompleted : book.yearCompleted)}`
+            : "\u00A0"}
+        </div>
+      </div>
+
       {book.quote && (
         <div onClick={e => e.stopPropagation()}>
           <button style={styles.quoteToggle} onClick={() => setShowQuote(s => !s)}>
@@ -230,25 +233,31 @@ function BookCard({ book, onStatusChange, onDelete, reorder, rank, onMoveUp, onM
           {showQuote && <div style={styles.quoteBlock}>{book.quote}</div>}
         </div>
       )}
-      <div style={styles.cardActions} onClick={e => e.stopPropagation()}>
-        {book.status === "TBR" && (
-          <button style={styles.actionBtn} onClick={() => onStatusChange(book.id, "In Progress")}>
-            <Play size={13} /> Start
+
+      <div style={styles.cardBottomBlock}>
+        <div style={styles.cardStatusRow}>
+          <StatusStamp status={book.status} />
+        </div>
+        <div style={styles.cardActions} onClick={e => e.stopPropagation()}>
+          {book.status === "TBR" && (
+            <button style={styles.actionBtn} onClick={() => onStatusChange(book.id, "In Progress")}>
+              <Play size={13} /> Start
+            </button>
+          )}
+          {book.status !== "Read" && (
+            <button style={styles.actionBtn} onClick={() => onStatusChange(book.id, "Read")}>
+              <CheckCircle2 size={13} /> Mark read
+            </button>
+          )}
+          {book.status !== "DNF" && (
+            <button style={styles.actionBtnMuted} onClick={() => onStatusChange(book.id, "DNF")}>
+              <BookX size={13} /> DNF
+            </button>
+          )}
+          <button style={styles.deleteBtn} onClick={() => onDelete(book.id)}>
+            <Trash2 size={13} />
           </button>
-        )}
-        {book.status !== "Read" && (
-          <button style={styles.actionBtn} onClick={() => onStatusChange(book.id, "Read")}>
-            <CheckCircle2 size={13} /> Mark read
-          </button>
-        )}
-        {book.status !== "DNF" && (
-          <button style={styles.actionBtnMuted} onClick={() => onStatusChange(book.id, "DNF")}>
-            <BookX size={13} /> DNF
-          </button>
-        )}
-        <button style={styles.deleteBtn} onClick={() => onDelete(book.id)}>
-          <Trash2 size={13} />
-        </button>
+        </div>
       </div>
     </div>
   );
@@ -268,9 +277,13 @@ function ReadingLedger({ uid, email, onSignOut }) {
   const [libStatusFilter, setLibStatusFilter] = useState("All");
   const [seriesSearch, setSeriesSearch] = useState("");
   const [seriesStatusFilter, setSeriesStatusFilter] = useState("All");
+  const [selectedSeriesName, setSelectedSeriesName] = useState(null);
+  const [seriesLookupLoading, setSeriesLookupLoading] = useState(false);
+  const [seriesLookupError, setSeriesLookupError] = useState("");
   const [libGroupBy, setLibGroupBy] = useState("year");
   const [libSort, setLibSort] = useState("finish");
   const [expandedYears, setExpandedYears] = useState(() => new Set());
+  const [expandedStatsYears, setExpandedStatsYears] = useState(() => new Set());
   const [editingBook, setEditingBook] = useState(null);
   const [editDraft, setEditDraft] = useState(null);
   const [editLookupLoading, setEditLookupLoading] = useState(false);
@@ -285,9 +298,11 @@ function ReadingLedger({ uid, email, onSignOut }) {
   const [lookupDone, setLookupDone] = useState(false);
 
   const [goalDraft, setGoalDraft] = useState({});
+  const [seriesOverrides, setSeriesOverrides] = useState({});
 
   const booksRef = useMemo(() => (uid ? firebase.firestore().collection("users").doc(uid).collection("library").doc("books") : null), [uid]);
   const goalsRef = useMemo(() => (uid ? firebase.firestore().collection("users").doc(uid).collection("library").doc("goals") : null), [uid]);
+  const seriesOverridesRef = useMemo(() => (uid ? firebase.firestore().collection("users").doc(uid).collection("library").doc("seriesOverrides") : null), [uid]);
 
   useEffect(() => {
     if (!booksRef) return;
@@ -322,6 +337,15 @@ function ReadingLedger({ uid, email, onSignOut }) {
     return () => unsub();
   }, [goalsRef]);
 
+  useEffect(() => {
+    if (!seriesOverridesRef) return;
+    const unsub = seriesOverridesRef.onSnapshot(
+      (snap) => setSeriesOverrides(snap.exists && snap.data() ? snap.data().overrides || {} : {}),
+      (err) => console.error("series overrides snapshot error", err)
+    );
+    return () => unsub();
+  }, [seriesOverridesRef]);
+
   function persistBooks(newList) {
     setBooks(newList);
     if (booksRef) booksRef.set({ list: newList, dataVersion: DATA_VERSION }).catch(e => console.error("save books failed", e));
@@ -330,6 +354,16 @@ function ReadingLedger({ uid, email, onSignOut }) {
   function persistGoals(newGoals) {
     setGoals(newGoals);
     if (goalsRef) goalsRef.set({ goals: newGoals }).catch(e => console.error("save goals failed", e));
+  }
+
+  function persistSeriesOverrides(newOverrides) {
+    setSeriesOverrides(newOverrides);
+    if (seriesOverridesRef) seriesOverridesRef.set({ overrides: newOverrides }).catch(e => console.error("save series overrides failed", e));
+  }
+
+  function updateSeriesOverride(name, patch) {
+    const next = { ...seriesOverrides, [name]: { ...(seriesOverrides[name] || {}), ...patch } };
+    persistSeriesOverrides(next);
   }
 
   const currentYear = new Date().getFullYear();
@@ -345,7 +379,12 @@ function ReadingLedger({ uid, email, onSignOut }) {
         acc[y].read += 1;
         acc[y].pages += Number(b.pages) || 0;
         acc[y].audio += Number(b.audioHours) || 0;
-        if (b.monthCompleted) acc[y].months[b.monthCompleted] = (acc[y].months[b.monthCompleted] || 0) + 1;
+        if (b.monthCompleted) {
+          if (!acc[y].months[b.monthCompleted]) acc[y].months[b.monthCompleted] = { read: 0, pages: 0, audio: 0 };
+          acc[y].months[b.monthCompleted].read += 1;
+          acc[y].months[b.monthCompleted].pages += Number(b.pages) || 0;
+          acc[y].months[b.monthCompleted].audio += Number(b.audioHours) || 0;
+        }
       }
     });
     return acc;
@@ -385,25 +424,28 @@ function ReadingLedger({ uid, email, onSignOut }) {
 
     const rows = Object.entries(bySeries).map(([name, list]) => {
       const meta = metaMap[name];
+      const override = seriesOverrides[name] || {};
+      const sortedList = list.slice().sort((a, b) => (a.seriesNum ?? 999) - (b.seriesNum ?? 999));
       const readCount = list.filter(b => b.status === "Read").length;
       const inProgressCount = list.filter(b => b.status === "In Progress").length;
       const dnfCount = list.filter(b => b.status === "DNF").length;
       const trackedTotal = list.length;
-      const totalBooks = meta && meta.totalBooks ? Math.max(meta.totalBooks, trackedTotal) : trackedTotal;
+      const totalBooks = override.totalBooks || (meta && meta.totalBooks ? Math.max(meta.totalBooks, trackedTotal) : trackedTotal);
       const author = (meta && meta.author) || list[0].author;
-      const ongoing = meta ? meta.ongoing === "Y" : false;
+      const ongoing = override.ongoingOverride != null ? override.ongoingOverride : (meta ? meta.ongoing === "Y" : false);
       let status;
-      if (dnfCount > 0) status = "DNF";
+      if (override.dnf) status = "DNF";
+      else if (dnfCount > 0) status = "DNF";
       else if (readCount === 0 && inProgressCount === 0) status = "Not started";
       else if (inProgressCount > 0) status = "Reading";
       else if (readCount >= totalBooks) status = ongoing ? "Caught up" : "Complete";
       else status = "Started";
-      return { name, author, readCount, totalBooks, ongoing, status };
+      return { name, author, readCount, totalBooks, ongoing, status, books: sortedList, manualDnf: !!override.dnf, totalBooksOverridden: !!override.totalBooks };
     });
     const rank = { "Reading": 0, "Started": 1, "Caught up": 2, "Not started": 3, "DNF": 4, "Complete": 5 };
     rows.sort((a, b) => (rank[a.status] ?? 6) - (rank[b.status] ?? 6) || a.name.localeCompare(b.name));
     return rows;
-  }, [books]);
+  }, [books, seriesOverrides]);
 
   const filteredSeries = useMemo(() => {
     let list = seriesProgress;
@@ -618,13 +660,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
     setShowAdd(false);
   }
 
-  async function fetchBookDetails(title, author) {
-    const prompt = `Search the web for the book "${title}"${author ? " by " + author : ""}. ` +
-      `Reply with ONLY a raw JSON object, no markdown code fences, no commentary before or after. ` +
-      `Use exactly these keys: "author" (string, the author's full name(s)), "series" (string or null, the series name if part of one, else null), ` +
-      `"seriesNum" (number or null, position in the series), "pages" (number or null, print page count), ` +
-      `"audioHours" (number or null, audiobook length in decimal hours, e.g. 12.5), "genre" (short string like "Fantasy" or "Sci-Fi"). ` +
-      `If you cannot find a field, use null for it. Do not guess wildly; prefer null over a fabricated number.`;
+  async function askClaudeForJSON(prompt) {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -642,6 +678,25 @@ function ReadingLedger({ uid, email, onSignOut }) {
     const end = clean.lastIndexOf("}");
     if (start === -1 || end === -1) throw new Error("No JSON found");
     return JSON.parse(clean.slice(start, end + 1));
+  }
+
+  async function fetchBookDetails(title, author) {
+    const prompt = `Search the web for the book "${title}"${author ? " by " + author : ""}. ` +
+      `Reply with ONLY a raw JSON object, no markdown code fences, no commentary before or after. ` +
+      `Use exactly these keys: "author" (string, the author's full name(s)), "series" (string or null, the series name if part of one, else null), ` +
+      `"seriesNum" (number or null, position in the series), "pages" (number or null, print page count), ` +
+      `"audioHours" (number or null, audiobook length in decimal hours, e.g. 12.5), "genre" (short string like "Fantasy" or "Sci-Fi"). ` +
+      `If you cannot find a field, use null for it. Do not guess wildly; prefer null over a fabricated number.`;
+    return askClaudeForJSON(prompt);
+  }
+
+  async function fetchSeriesDetails(seriesName, author) {
+    const prompt = `Search the web for the book series "${seriesName}"${author ? " by " + author : ""}. ` +
+      `Reply with ONLY a raw JSON object, no markdown code fences, no commentary before or after. ` +
+      `Use exactly these keys: "totalBooks" (number or null, the total number of main-series books, published or planned), ` +
+      `"ongoing" (boolean or null, true if the series is not yet complete / more books are expected). ` +
+      `If you cannot find a field confidently, use null for it. Do not guess wildly.`;
+    return askClaudeForJSON(prompt);
   }
 
   async function lookupDetails() {
@@ -692,6 +747,21 @@ function ReadingLedger({ uid, email, onSignOut }) {
       setEditLookupError("Couldn't fetch details automatically — fill in what you know by hand.");
     }
     setEditLookupLoading(false);
+  }
+
+  async function lookupSeriesTotal(seriesRow) {
+    setSeriesLookupLoading(true);
+    setSeriesLookupError("");
+    try {
+      const parsed = await fetchSeriesDetails(seriesRow.name, seriesRow.author);
+      const patch = {};
+      if (parsed.totalBooks != null) patch.totalBooks = Number(parsed.totalBooks);
+      if (parsed.ongoing != null) patch.ongoingOverride = !!parsed.ongoing;
+      updateSeriesOverride(seriesRow.name, patch);
+    } catch (e) {
+      setSeriesLookupError("Couldn't fetch details automatically.");
+    }
+    setSeriesLookupLoading(false);
   }
 
   function updateGoal(year, value) {
@@ -938,7 +1008,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
                   "DNF": "#A13D2D",
                 }[s.status] || "#8B8676";
                 return (
-                  <div key={s.name} style={styles.seriesRow}>
+                  <div key={s.name} style={styles.seriesRow} onClick={() => setSelectedSeriesName(s.name)}>
                     <div style={styles.seriesRowTop}>
                       <span style={styles.seriesName}>{s.name}</span>
                       <span style={{ ...styles.stamp, color: cfg, borderColor: cfg }}>{s.status.toUpperCase()}</span>
@@ -958,6 +1028,65 @@ function ReadingLedger({ uid, email, onSignOut }) {
           </div>
         )}
 
+        {selectedSeriesName && (() => {
+          const s = seriesProgress.find(x => x.name === selectedSeriesName);
+          if (!s) return null;
+          const pct = s.totalBooks ? Math.min(100, Math.round((s.readCount / s.totalBooks) * 100)) : 0;
+          return (
+            <div style={styles.modalOverlay} onClick={() => setSelectedSeriesName(null)}>
+              <div style={styles.modal} onClick={e => e.stopPropagation()}>
+                <div style={styles.modalHeader}>
+                  <span>{s.name}</span>
+                  <button style={styles.closeBtn} onClick={() => setSelectedSeriesName(null)}><X size={16} /></button>
+                </div>
+                <div style={{ fontSize: 12.5, color: "#8B8676", marginBottom: 4 }}>
+                  {s.author || "Unknown author"}{s.ongoing ? " · ongoing" : ""}
+                </div>
+                <div style={styles.seriesProgressRow}>
+                  <div style={styles.seriesProgressTrack}>
+                    <div style={{ ...styles.seriesProgressFill, width: `${pct}%`, background: "#B8874A" }} />
+                  </div>
+                  <span style={styles.seriesProgressLabel}>{s.readCount} / {s.totalBooks}</span>
+                </div>
+
+                <button style={styles.lookupBtn} onClick={() => lookupSeriesTotal(s)} disabled={seriesLookupLoading}>
+                  {seriesLookupLoading ? <Loader2 size={14} className="spin" /> : <Sparkles size={14} />}
+                  {seriesLookupLoading ? "Searching the web…" : "Look up total books in series"}
+                </button>
+                {seriesLookupError && <div style={styles.lookupError}>{seriesLookupError}</div>}
+                {s.totalBooksOverridden && !seriesLookupError && (
+                  <div style={styles.lookupSuccess}>Total book count updated from web search.</div>
+                )}
+
+                <button
+                  style={{ ...styles.deleteEntryBtn, marginTop: 14 }}
+                  onClick={() => updateSeriesOverride(s.name, { dnf: !s.manualDnf })}
+                >
+                  <BookX size={13} /> {s.manualDnf ? "Remove DNF mark from series" : "Mark series as DNF"}
+                </button>
+
+                <div style={{ marginTop: 18, borderTop: "1px dashed rgba(201,194,172,0.2)", paddingTop: 12 }}>
+                  {s.books.map(b => (
+                    <div key={b.id} style={styles.seriesBookRow}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={styles.seriesBookTitle}>
+                          {b.seriesNum ? `${b.seriesNum}. ` : ""}{b.title}
+                        </div>
+                        <StatusStamp status={b.status} />
+                      </div>
+                      {b.status !== "DNF" && (
+                        <button style={styles.actionBtnMuted} onClick={() => updateStatus(b.id, "DNF")}>
+                          <BookX size={13} /> DNF
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
         {tab === "stats" && (
           <div>
             <div style={styles.sectionTitle}>Year over year</div>
@@ -965,6 +1094,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
               <table style={styles.table}>
                 <thead>
                   <tr>
+                    <th style={styles.th}></th>
                     <th style={styles.th}>Year</th>
                     <th style={styles.th}>Goal</th>
                     <th style={styles.th}>Read</th>
@@ -975,18 +1105,46 @@ function ReadingLedger({ uid, email, onSignOut }) {
                 </thead>
                 <tbody>
                   {allYears.map(y => {
-                    const s = yearStats[y] || { read: 0, pages: 0, audio: 0 };
+                    const s = yearStats[y] || { read: 0, pages: 0, audio: 0, months: {} };
                     const g = Number(goals[y]) || 0;
                     const pct = g ? Math.round((s.read / g) * 100) : null;
+                    const expanded = expandedStatsYears.has(y);
+                    const monthsWithData = Array.from({ length: 12 }, (_, i) => i + 1).filter(m => s.months[m]);
                     return (
-                      <tr key={y} style={y === currentYear ? styles.trCurrent : undefined}>
-                        <td style={styles.td}>{y}</td>
-                        <td style={styles.td}>{g || "—"}</td>
-                        <td style={styles.td}>{s.read}</td>
-                        <td style={styles.td}>{pct !== null ? `${pct}%` : "—"}</td>
-                        <td style={styles.td}>{Math.round(s.pages).toLocaleString()}</td>
-                        <td style={styles.td}>{s.audio.toFixed(1)}</td>
-                      </tr>
+                      <React.Fragment key={y}>
+                        <tr
+                          style={{ ...(y === currentYear ? styles.trCurrent : {}), cursor: "pointer" }}
+                          onClick={() => setExpandedStatsYears(prev => { const n = new Set(prev); n.has(y) ? n.delete(y) : n.add(y); return n; })}
+                        >
+                          <td style={styles.td}>{expanded ? <ChevronDown size={13} /> : <ChevronRight size={13} />}</td>
+                          <td style={styles.td}>{y}</td>
+                          <td style={styles.td}>{g || "—"}</td>
+                          <td style={styles.td}>{s.read}</td>
+                          <td style={styles.td}>{pct !== null ? `${pct}%` : "—"}</td>
+                          <td style={styles.td}>{Math.round(s.pages).toLocaleString()}</td>
+                          <td style={styles.td}>{s.audio.toFixed(1)}</td>
+                        </tr>
+                        {expanded && (
+                          <tr>
+                            <td colSpan={7} style={styles.monthBreakdownCell}>
+                              {monthsWithData.length === 0 ? (
+                                <div style={styles.emptyMonthNote}>No books finished with a recorded month for {y}.</div>
+                              ) : (
+                                <div style={styles.monthGrid}>
+                                  {monthsWithData.map(m => (
+                                    <div key={m} style={styles.monthRow}>
+                                      <span style={styles.monthName}>{monthName(m)}</span>
+                                      <span style={styles.monthStat}>{s.months[m].read} book{s.months[m].read !== 1 ? "s" : ""}</span>
+                                      <span style={styles.monthStat}>{Math.round(s.months[m].pages).toLocaleString()}p</span>
+                                      <span style={styles.monthStat}>{s.months[m].audio.toFixed(1)}h audio</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
                     );
                   })}
                 </tbody>
@@ -1388,6 +1546,7 @@ const styles = {
     gap: 4,
     position: "relative",
     cursor: "pointer",
+    height: "100%",
   },
   cardTopRow: {
     display: "flex",
@@ -1465,15 +1624,28 @@ const styles = {
     fontSize: 16.5,
     lineHeight: 1.25,
     color: "#231B12",
+    minHeight: "2.5em",
+    display: "-webkit-box",
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: "vertical",
+    overflow: "hidden",
   },
   cardAuthor: {
     fontSize: 12.5,
     fontStyle: "italic",
     color: "#5A4E38",
+    minHeight: "1.3em",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
   },
   cardSeries: {
     fontSize: 11.5,
     color: "#7A6B4C",
+    minHeight: "1.3em",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
   },
   cardMetaRow: {
     display: "flex",
@@ -1481,6 +1653,7 @@ const styles = {
     gap: 6,
     flexWrap: "wrap",
     marginTop: 4,
+    minHeight: 22,
   },
   metaItem: {
     fontFamily: "'JetBrains Mono', monospace",
@@ -1498,11 +1671,24 @@ const styles = {
     border: "1px solid",
     background: "rgba(255,255,255,0.4)",
   },
+  cardDatesSlot: {
+    marginTop: 2,
+  },
   cardCompleted: {
     fontSize: 10.5,
     color: "#6E7F52",
     fontFamily: "'JetBrains Mono', monospace",
     marginTop: 2,
+    minHeight: "1.3em",
+  },
+  cardBottomBlock: {
+    marginTop: "auto",
+    paddingTop: 8,
+  },
+  cardStatusRow: {
+    display: "flex",
+    justifyContent: "flex-start",
+    marginBottom: 6,
   },
   quoteToggle: {
     background: "none",
@@ -1682,6 +1868,37 @@ const styles = {
   trCurrent: {
     background: "rgba(184,135,74,0.08)",
   },
+  monthBreakdownCell: {
+    background: "rgba(184,135,74,0.04)",
+    padding: "10px 14px 14px",
+    borderBottom: "1px solid rgba(201,194,172,0.08)",
+  },
+  emptyMonthNote: {
+    fontSize: 12,
+    color: "#8B8676",
+    fontStyle: "italic",
+    fontFamily: "'Fraunces', serif",
+  },
+  monthGrid: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 4,
+  },
+  monthRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 14,
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: 11.5,
+  },
+  monthName: {
+    width: 40,
+    color: "#EFE7D2",
+  },
+  monthStat: {
+    color: "#8B8676",
+    minWidth: 70,
+  },
   barChart: {
     display: "flex",
     alignItems: "flex-end",
@@ -1723,6 +1940,22 @@ const styles = {
     borderRadius: 4,
     padding: "12px 14px",
     background: "rgba(239,231,210,0.02)",
+    cursor: "pointer",
+  },
+  seriesBookRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    padding: "8px 0",
+    borderBottom: "1px solid rgba(201,194,172,0.08)",
+  },
+  seriesBookTitle: {
+    fontSize: 13,
+    color: "#EFE7D2",
+    marginBottom: 4,
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
   },
   seriesRowTop: {
     display: "flex",
