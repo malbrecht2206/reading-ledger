@@ -1954,6 +1954,7 @@ function App() {
   const [authError, setAuthError] = useState("");
 
   useEffect(() => {
+    firebase.auth().getRedirectResult().catch(e => setAuthError(e.message));
     const unsub = firebase.auth().onAuthStateChanged(u => {
       setUser(u);
       setAuthLoading(false);
@@ -1964,7 +1965,7 @@ function App() {
   function handleSignIn() {
     setAuthError("");
     const provider = new firebase.auth.GoogleAuthProvider();
-    firebase.auth().signInWithPopup(provider).catch(e => setAuthError(e.message));
+    firebase.auth().signInWithRedirect(provider);
   }
 
   function handleSignOut() {
