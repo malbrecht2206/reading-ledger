@@ -9,6 +9,10 @@
   </style>
 </head>
 <body>
+  <!-- TEMPORARY: mobile debug console. Remove this script tag once things are working. -->
+  <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+  <script>eruda.init();</script>
+
   <div id="root"></div>
 
   <!-- React (no build step needed) -->
@@ -24,6 +28,6 @@
   <script src="firebase-config.js"></script>
 
   <!-- The app itself, transformed by Babel right in the browser -->
-  <script type="text/babel" data-presets="react" src="app.jsx"></script>
+  <script type="text/babel" data-presets="react" src="app.jsx?v=2"></script>
 </body>
 </html>
