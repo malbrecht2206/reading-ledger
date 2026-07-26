@@ -211,6 +211,7 @@ function BookCard({ book, onStatusChange, onDelete, reorder, rank, onMoveUp, onM
       )}
       <div style={styles.cardTopRow}>
         <span style={styles.callNumber}>{callNumber(book)}</span>
+        <StatusStamp status={book.status} />
       </div>
       <div style={styles.cardTitle}>{book.title}</div>
       <div style={styles.cardAuthor}>{book.author || "Unknown author"}</div>
@@ -246,9 +247,6 @@ function BookCard({ book, onStatusChange, onDelete, reorder, rank, onMoveUp, onM
       )}
 
       <div style={styles.cardBottomBlock}>
-        <div style={styles.cardStatusRow}>
-          <StatusStamp status={book.status} />
-        </div>
         <div style={styles.cardActions} onClick={e => e.stopPropagation()}>
           {book.status === "TBR" && (
             <button style={styles.actionBtn} onClick={() => onStatusChange(book.id, "In Progress")}>
@@ -274,6 +272,69 @@ function BookCard({ book, onStatusChange, onDelete, reorder, rank, onMoveUp, onM
   );
 }
 
+function BookListRow({ book, onStatusChange, onDelete, onOpenEdit, reorder, rank, onMoveUp, onMoveDown, canMoveUp, canMoveDown }) {
+  const audio = fmtHours(book.audioHours);
+  return (
+    <div style={styles.listRow} onClick={() => onOpenEdit && onOpenEdit(book)}>
+      {reorder && (
+        <div style={styles.listRankBlock} onClick={e => e.stopPropagation()}>
+          <span style={styles.rankBadge}>#{rank}</span>
+          <div style={styles.reorderBtns}>
+            <button style={{ ...styles.reorderBtn, opacity: canMoveUp ? 1 : 0.3 }} onClick={() => canMoveUp && onMoveUp(book.id)} disabled={!canMoveUp}>↑</button>
+            <button style={{ ...styles.reorderBtn, opacity: canMoveDown ? 1 : 0.3 }} onClick={() => canMoveDown && onMoveDown(book.id)} disabled={!canMoveDown}>↓</button>
+          </div>
+        </div>
+      )}
+      <div style={styles.listMain}>
+        <div style={styles.listTitleLine}>
+          <span style={styles.listTitle}>{book.title}</span>
+          <StatusStamp status={book.status} />
+        </div>
+        <div style={styles.listSubLine}>
+          {book.author || "Unknown author"}
+          {book.series ? ` · ${book.series}${book.seriesNum ? " #" + book.seriesNum : ""}` : ""}
+          {book.pages ? ` · ${Math.round(book.pages)}p` : ""}
+          {audio ? ` · ${audio} audio` : ""}
+          {book.genre ? ` · ${book.genre}` : ""}
+        </div>
+      </div>
+      <div style={styles.listActions} onClick={e => e.stopPropagation()}>
+        {book.status === "TBR" && (
+          <button style={styles.actionBtn} onClick={() => onStatusChange(book.id, "In Progress")}><Play size={13} /></button>
+        )}
+        {book.status !== "Read" && (
+          <button style={styles.actionBtn} onClick={() => onStatusChange(book.id, "Read")}><CheckCircle2 size={13} /></button>
+        )}
+        {book.status !== "DNF" && (
+          <button style={styles.actionBtnMuted} onClick={() => onStatusChange(book.id, "DNF")}><BookX size={13} /></button>
+        )}
+        <button style={styles.deleteBtn} onClick={() => onDelete(book.id)}><Trash2 size={13} /></button>
+      </div>
+    </div>
+  );
+}
+
+function ViewModeToggle({ mode, onChange }) {
+  return (
+    <div style={styles.viewToggle}>
+      <button
+        style={{ ...styles.viewToggleBtn, ...(mode === "tile" ? styles.viewToggleBtnActive : {}) }}
+        onClick={() => onChange("tile")}
+        title="Tile view"
+      >
+        <LayoutGrid size={14} />
+      </button>
+      <button
+        style={{ ...styles.viewToggleBtn, ...(mode === "list" ? styles.viewToggleBtnActive : {}) }}
+        onClick={() => onChange("list")}
+        title="List view"
+      >
+        <SeriesIcon size={14} />
+      </button>
+    </div>
+  );
+}
+
 function ReadingLedger({ uid, email, onSignOut }) {
   const [books, setBooks] = useState(null);
   const [goals, setGoals] = useState(null);
@@ -283,9 +344,11 @@ function ReadingLedger({ uid, email, onSignOut }) {
   const [tbrSearch, setTbrSearch] = useState("");
   const [tbrGenre, setTbrGenre] = useState("All");
   const [tbrSort, setTbrSort] = useState("priority");
+  const [tbrViewMode, setTbrViewMode] = useState("tile");
 
   const [libSearch, setLibSearch] = useState("");
   const [libStatusFilter, setLibStatusFilter] = useState("All");
+  const [libViewMode, setLibViewMode] = useState("tile");
   const [seriesSearch, setSeriesSearch] = useState("");
   const [seriesStatusFilter, setSeriesStatusFilter] = useState("All");
   const [selectedSeriesName, setSelectedSeriesName] = useState(null);
@@ -913,6 +976,8 @@ function ReadingLedger({ uid, email, onSignOut }) {
         @media (max-width: 640px) {
           .cardGrid { grid-template-columns: 1fr !important; }
           .statGrid { grid-template-columns: repeat(2, 1fr) !important; }
+          .tabRow { gap: 4px !important; }
+          .tabBtn { padding: 6px 8px !important; font-size: 11px !important; gap: 4px !important; }
         }
       `}</style>
 
@@ -929,20 +994,20 @@ function ReadingLedger({ uid, email, onSignOut }) {
         </div>
       </div>
 
-      <div style={styles.tabRow}>
+      <div style={styles.tabRow} className="tabRow">
         {[
           { id: "dashboard", label: "Dashboard", icon: LayoutGrid },
-          { id: "tbr", label: "To Be Read", icon: BookOpen },
+          { id: "tbr", label: "TBR", icon: BookOpen },
           { id: "library", label: "Library", icon: Library },
-          { id: "series", label: "By Series", icon: SeriesIcon },
-          { id: "stats", label: "Yearly Stats", icon: StatsIcon },
+          { id: "series", label: "Series", icon: SeriesIcon },
+          { id: "stats", label: "Stats", icon: StatsIcon },
           { id: "goals", label: "Goals", icon: Target },
           { id: "friends", label: "Friends", icon: FriendsIcon },
         ].map(t => {
           const Icon = t.icon;
           const active = tab === t.id;
           return (
-            <button key={t.id} onClick={() => setTab(t.id)} style={{ ...styles.tabBtn, ...(active ? styles.tabBtnActive : {}) }}>
+            <button key={t.id} onClick={() => setTab(t.id)} className="tabBtn" style={{ ...styles.tabBtn, ...(active ? styles.tabBtnActive : {}) }}>
               <Icon size={14} /> {t.label}
             </button>
           );
@@ -1019,6 +1084,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
                   <option value="author">Sort: Author</option>
                   <option value="series">Sort: Series</option>
                 </select>
+                <ViewModeToggle mode={tbrViewMode} onChange={setTbrViewMode} />
               </div>
               <button style={styles.addBtn} onClick={() => setShowAdd(true)}><Plus size={14} /> Add a book</button>
             </div>
@@ -1026,24 +1092,44 @@ function ReadingLedger({ uid, email, onSignOut }) {
               {tbrBooks.length} book{tbrBooks.length !== 1 ? "s" : ""} on the shelf
               {tbrSort === "priority" && " — use the arrows to rank what you want to read next"}
             </div>
-            <div className="cardGrid" style={styles.cardGrid}>
-              {tbrBooks.map((b, i) => (
-                <BookCard
-                  key={b.id}
-                  book={b}
-                  onStatusChange={updateStatus}
-                  onDelete={deleteBook}
-                  reorder={tbrSort === "priority"}
-                  rank={i + 1}
-                  onMoveUp={id => moveInQueue(id, "up")}
-                  onMoveDown={id => moveInQueue(id, "down")}
-                  onSetRank={setRankDirect}
-                  canMoveUp={i > 0}
-                  canMoveDown={i < tbrBooks.length - 1}
-                  onOpenEdit={setEditingBook}
-                />
-              ))}
-            </div>
+            {tbrViewMode === "tile" ? (
+              <div className="cardGrid" style={styles.cardGrid}>
+                {tbrBooks.map((b, i) => (
+                  <BookCard
+                    key={b.id}
+                    book={b}
+                    onStatusChange={updateStatus}
+                    onDelete={deleteBook}
+                    reorder={tbrSort === "priority"}
+                    rank={i + 1}
+                    onMoveUp={id => moveInQueue(id, "up")}
+                    onMoveDown={id => moveInQueue(id, "down")}
+                    onSetRank={setRankDirect}
+                    canMoveUp={i > 0}
+                    canMoveDown={i < tbrBooks.length - 1}
+                    onOpenEdit={setEditingBook}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div style={styles.listView}>
+                {tbrBooks.map((b, i) => (
+                  <BookListRow
+                    key={b.id}
+                    book={b}
+                    onStatusChange={updateStatus}
+                    onDelete={deleteBook}
+                    reorder={tbrSort === "priority"}
+                    rank={i + 1}
+                    onMoveUp={id => moveInQueue(id, "up")}
+                    onMoveDown={id => moveInQueue(id, "down")}
+                    canMoveUp={i > 0}
+                    canMoveDown={i < tbrBooks.length - 1}
+                    onOpenEdit={setEditingBook}
+                  />
+                ))}
+              </div>
+            )}
             {tbrBooks.length === 0 && <div style={styles.emptyState}>Nothing here. Add a book to start your queue.</div>}
           </div>
         )}
@@ -1072,6 +1158,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
                   <option value="author">Sort within group: Author</option>
                   <option value="pages">Sort within group: Pages</option>
                 </select>
+                <ViewModeToggle mode={libViewMode} onChange={setLibViewMode} />
               </div>
             </div>
             {libraryGroups.map(([groupKey, list]) => {
@@ -1084,9 +1171,15 @@ function ReadingLedger({ uid, email, onSignOut }) {
                     <span style={styles.yearHeaderCount}>{list.length} book{list.length !== 1 ? "s" : ""}</span>
                   </button>
                   {expanded && (
-                    <div className="cardGrid" style={styles.cardGrid}>
-                      {list.map(b => <BookCard key={b.id} book={b} onStatusChange={updateStatus} onDelete={deleteBook} onOpenEdit={setEditingBook} />)}
-                    </div>
+                    libViewMode === "tile" ? (
+                      <div className="cardGrid" style={styles.cardGrid}>
+                        {list.map(b => <BookCard key={b.id} book={b} onStatusChange={updateStatus} onDelete={deleteBook} onOpenEdit={setEditingBook} />)}
+                      </div>
+                    ) : (
+                      <div style={styles.listView}>
+                        {list.map(b => <BookListRow key={b.id} book={b} onStatusChange={updateStatus} onDelete={deleteBook} onOpenEdit={setEditingBook} />)}
+                      </div>
+                    )
                   )}
                 </div>
               );
@@ -1758,6 +1851,79 @@ const styles = {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))",
     gap: 12,
+  },
+  viewToggle: {
+    display: "flex",
+    border: "1px solid rgba(201,194,172,0.2)",
+    borderRadius: 3,
+    overflow: "hidden",
+  },
+  viewToggleBtn: {
+    background: "transparent",
+    border: "none",
+    color: "#8B8676",
+    padding: "7px 9px",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+  },
+  viewToggleBtnActive: {
+    background: "rgba(184,135,74,0.18)",
+    color: "#EFE7D2",
+  },
+  listView: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 8,
+  },
+  listRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    background: "#EFE7D2",
+    color: "#2A2118",
+    borderRadius: 3,
+    padding: "10px 14px",
+    cursor: "pointer",
+    boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+  },
+  listRankBlock: {
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    flexShrink: 0,
+  },
+  listMain: {
+    flex: 1,
+    minWidth: 0,
+  },
+  listTitleLine: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+  },
+  listTitle: {
+    fontFamily: "'Fraunces', serif",
+    fontWeight: 600,
+    fontSize: 14.5,
+    color: "#231B12",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+  },
+  listSubLine: {
+    fontSize: 11.5,
+    color: "#5A4E38",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    marginTop: 2,
+  },
+  listActions: {
+    display: "flex",
+    gap: 4,
+    flexShrink: 0,
   },
   card: {
     background: "#EFE7D2",
