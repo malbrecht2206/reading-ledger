@@ -45,6 +45,17 @@ function SeriesIcon({ size = 14 }) {
   );
 }
 
+function FriendsIcon({ size = 14 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="9" cy="8" r="3" />
+      <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6" />
+      <circle cx="18" cy="9" r="2.3" />
+      <path d="M15.5 14.2c2.5.4 4.5 2.6 4.5 5.3" />
+    </svg>
+  );
+}
+
 const DATA_VERSION = 2;
 const STATUS_ORDER = ["In Progress", "TBR", "Read", "DNF"];
 const STATUS_LABEL = {
@@ -312,8 +323,9 @@ function ReadingLedger({ uid, email, onSignOut }) {
           setBooks(snap.data().list || []);
           loadedRef.current = true;
         } else {
-          const seeded = SEED_BOOKS.map((book, i) => ({ ...book, priority: book.priority ?? i }));
-          await booksRef.set({ list: seeded, dataVersion: DATA_VERSION });
+          // New accounts start with an empty shelf, not the original owner's library.
+          // (SEED_BOOKS was only ever a one-time personal data import and is no longer used here.)
+          await booksRef.set({ list: [], dataVersion: DATA_VERSION });
         }
       },
       (err) => console.error("books snapshot error", err)
@@ -345,6 +357,85 @@ function ReadingLedger({ uid, email, onSignOut }) {
     );
     return () => unsub();
   }, [seriesOverridesRef]);
+
+  const [profile, setProfile] = useState(null);
+  const [friends, setFriends] = useState([]);
+  const [addFriendCode, setAddFriendCode] = useState("");
+  const [addFriendError, setAddFriendError] = useState("");
+  const [addFriendLoading, setAddFriendLoading] = useState(false);
+  const [viewingFriendUid, setViewingFriendUid] = useState(null);
+  const [friendSummary, setFriendSummary] = useState(null);
+  const [friendSummaryLoading, setFriendSummaryLoading] = useState(false);
+  const [friendSummaryError, setFriendSummaryError] = useState("");
+
+  const profileRef = useMemo(() => (uid ? firebase.firestore().collection("users").doc(uid) : null), [uid]);
+  const publicSummaryRef = useMemo(() => (uid ? firebase.firestore().collection("users").doc(uid).collection("library").doc("publicSummary") : null), [uid]);
+  const friendsRef = useMemo(() => (uid ? firebase.firestore().collection("users").doc(uid).collection("friends") : null), [uid]);
+
+  useEffect(() => {
+    if (!profileRef) return;
+    const unsub = profileRef.onSnapshot(
+      (snap) => setProfile(snap.exists ? snap.data() : null),
+      (err) => console.error("profile snapshot error", err)
+    );
+    return () => unsub();
+  }, [profileRef]);
+
+  useEffect(() => {
+    if (!friendsRef) return;
+    const unsub = friendsRef.onSnapshot(
+      (snap) => setFriends(snap.docs.map(d => ({ uid: d.id, ...d.data() }))),
+      (err) => console.error("friends snapshot error", err)
+    );
+    return () => unsub();
+  }, [friendsRef]);
+
+
+  async function addFriendByCode(code) {
+    setAddFriendError("");
+    setAddFriendLoading(true);
+    try {
+      const trimmed = code.trim().toUpperCase();
+      if (!trimmed) throw new Error("Enter a code first.");
+      const db = firebase.firestore();
+      const codeDoc = await db.collection("inviteCodes").doc(trimmed).get();
+      if (!codeDoc.exists) throw new Error("That code doesn't match anyone.");
+      const theirUid = codeDoc.data().uid;
+      if (theirUid === uid) throw new Error("That's your own code.");
+      const theirProfileSnap = await db.collection("users").doc(theirUid).get();
+      const theirName = (theirProfileSnap.exists && theirProfileSnap.data().displayName) || "Reader";
+      const myName = (profile && profile.displayName) || "Reader";
+      const batch = db.batch();
+      batch.set(db.collection("users").doc(uid).collection("friends").doc(theirUid), { displayName: theirName, addedAt: Date.now() });
+      batch.set(db.collection("users").doc(theirUid).collection("friends").doc(uid), { displayName: myName, addedAt: Date.now() });
+      await batch.commit();
+      setAddFriendCode("");
+    } catch (e) {
+      setAddFriendError(e.message);
+    }
+    setAddFriendLoading(false);
+  }
+
+  function removeFriend(friendUid) {
+    if (!friendsRef) return;
+    friendsRef.doc(friendUid).delete().catch(e => console.error("remove friend failed", e));
+    firebase.firestore().collection("users").doc(friendUid).collection("friends").doc(uid).delete().catch(() => {});
+  }
+
+  async function viewFriend(friendUid) {
+    setViewingFriendUid(friendUid);
+    setFriendSummary(null);
+    setFriendSummaryError("");
+    setFriendSummaryLoading(true);
+    try {
+      const snap = await firebase.firestore().collection("users").doc(friendUid).collection("library").doc("publicSummary").get();
+      if (!snap.exists) throw new Error("This friend hasn't added any books yet.");
+      setFriendSummary(snap.data());
+    } catch (e) {
+      setFriendSummaryError(e.message || "Couldn't load this friend's shelf.");
+    }
+    setFriendSummaryLoading(false);
+  }
 
   function persistBooks(newList) {
     setBooks(newList);
@@ -389,6 +480,31 @@ function ReadingLedger({ uid, email, onSignOut }) {
     });
     return acc;
   }, [books]);
+
+  // Keep a friends-readable public summary in sync whenever the library changes.
+  // Only currently-reading, finished books, and yearly stats go in here - no TBR, no quotes.
+  useEffect(() => {
+    if (!publicSummaryRef || !books || !profile) return;
+    const currentlyReading = books
+      .filter(b => b.status === "In Progress")
+      .map(b => ({ title: b.title, author: b.author, series: b.series, seriesNum: b.seriesNum, dateStarted: b.dateStarted || null }));
+    const read = books
+      .filter(b => b.status === "Read")
+      .map(b => ({
+        title: b.title, author: b.author, series: b.series, seriesNum: b.seriesNum,
+        genre: b.genre, pages: b.pages, audioHours: b.audioHours,
+        yearCompleted: b.yearCompleted, monthCompleted: b.monthCompleted,
+      }))
+      .sort((a, b) => (b.yearCompleted || 0) - (a.yearCompleted || 0) || (b.monthCompleted || 0) - (a.monthCompleted || 0));
+    publicSummaryRef.set({
+      displayName: profile.displayName || "",
+      currentlyReading,
+      read,
+      yearStats,
+      goals,
+      updatedAt: Date.now(),
+    }).catch(e => console.error("publicSummary save failed", e));
+  }, [books, profile, yearStats, goals, publicSummaryRef]);
 
   const allYears = useMemo(() => {
     const ys = new Set(Object.keys(yearStats).map(Number));
@@ -821,6 +937,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
           { id: "series", label: "By Series", icon: SeriesIcon },
           { id: "stats", label: "Yearly Stats", icon: StatsIcon },
           { id: "goals", label: "Goals", icon: Target },
+          { id: "friends", label: "Friends", icon: FriendsIcon },
         ].map(t => {
           const Icon = t.icon;
           const active = tab === t.id;
@@ -1203,7 +1320,114 @@ function ReadingLedger({ uid, email, onSignOut }) {
             </div>
           </div>
         )}
+
+        {tab === "friends" && (
+          <div>
+            <div style={styles.sectionBlock}>
+              <div style={styles.sectionTitle}>Your invite code</div>
+              <div style={styles.inviteCodeRow}>
+                <span style={styles.inviteCodeText}>{profile ? profile.inviteCode : "…"}</span>
+                <button
+                  style={styles.addBtn}
+                  onClick={() => profile && navigator.clipboard && navigator.clipboard.writeText(profile.inviteCode)}
+                >
+                  Copy
+                </button>
+              </div>
+              <div style={{ fontSize: 11.5, color: "#8B8676", marginTop: 6 }}>
+                Share this code with a friend so they can add you. Adding each other is mutual — you'll both see each other's currently-reading, finished books, and yearly stats. Your to-be-read list and quotes stay private.
+              </div>
+            </div>
+
+            <div style={styles.sectionBlock}>
+              <div style={styles.sectionTitle}>Add a friend</div>
+              <div style={styles.toolbar}>
+                <input
+                  style={styles.input}
+                  placeholder="Enter their code"
+                  value={addFriendCode}
+                  onChange={e => setAddFriendCode(e.target.value)}
+                  maxLength={8}
+                />
+                <button style={styles.addBtn} onClick={() => addFriendByCode(addFriendCode)} disabled={addFriendLoading}>
+                  {addFriendLoading ? <Loader2 size={14} className="spin" /> : <Plus size={14} />}
+                  Add
+                </button>
+              </div>
+              {addFriendError && <div style={styles.lookupError}>{addFriendError}</div>}
+            </div>
+
+            <div style={styles.sectionBlock}>
+              <div style={styles.sectionTitle}>Your friends</div>
+              {friends.length === 0 && <div style={styles.emptyState}>No friends added yet.</div>}
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {friends.map(f => (
+                  <div key={f.uid} style={styles.friendRow}>
+                    <span style={styles.friendName}>{f.displayName}</span>
+                    <button style={styles.actionBtn} onClick={() => viewFriend(f.uid)}>View shelf</button>
+                    <button style={styles.deleteBtn} onClick={() => removeFriend(f.uid)}><Trash2 size={13} /></button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
+
+      {viewingFriendUid && (
+        <div style={styles.modalOverlay} onClick={() => setViewingFriendUid(null)}>
+          <div style={styles.modal} onClick={e => e.stopPropagation()}>
+            <div style={styles.modalHeader}>
+              <span>{friendSummary ? friendSummary.displayName : "Friend's shelf"}</span>
+              <button style={styles.closeBtn} onClick={() => setViewingFriendUid(null)}><X size={16} /></button>
+            </div>
+            {friendSummaryLoading && (
+              <div style={{ display: "flex", justifyContent: "center", padding: 20 }}>
+                <Loader2 className="spin" size={22} color="#B8874A" />
+              </div>
+            )}
+            {friendSummaryError && <div style={styles.lookupError}>{friendSummaryError}</div>}
+            {friendSummary && !friendSummaryLoading && (
+              <div>
+                {friendSummary.currentlyReading && friendSummary.currentlyReading.length > 0 && (
+                  <div style={styles.sectionBlock}>
+                    <div style={{ ...styles.sectionTitle, fontSize: 15 }}>Currently reading</div>
+                    {friendSummary.currentlyReading.map((b, i) => (
+                      <div key={i} style={styles.friendBookLine}>
+                        {b.title}{b.author ? ` — ${b.author}` : ""}{b.series ? ` (${b.series}${b.seriesNum ? " #" + b.seriesNum : ""})` : ""}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div style={styles.sectionBlock}>
+                  <div style={{ ...styles.sectionTitle, fontSize: 15 }}>This year</div>
+                  {(() => {
+                    const s = (friendSummary.yearStats || {})[new Date().getFullYear()] || { read: 0, pages: 0, audio: 0 };
+                    const g = Number((friendSummary.goals || {})[new Date().getFullYear()]) || 0;
+                    return (
+                      <div style={{ fontSize: 12.5, color: "#8B8676" }}>
+                        {s.read} book{s.read !== 1 ? "s" : ""} finished{g ? ` (goal: ${g})` : ""} · {Math.round(s.pages).toLocaleString()} pages · {s.audio.toFixed(1)} audio hrs
+                      </div>
+                    );
+                  })()}
+                </div>
+                <div style={styles.sectionBlock}>
+                  <div style={{ ...styles.sectionTitle, fontSize: 15 }}>Recently finished</div>
+                  {(friendSummary.read || []).slice(0, 10).map((b, i) => (
+                    <div key={i} style={styles.friendBookLine}>
+                      {b.title}{b.author ? ` — ${b.author}` : ""}
+                      {b.yearCompleted ? ` (${monthName(b.monthCompleted)} ${b.yearCompleted})` : ""}
+                    </div>
+                  ))}
+                  {(!friendSummary.read || friendSummary.read.length === 0) && (
+                    <div style={styles.emptyState}>Nothing finished yet.</div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {showAdd && (
         <div style={styles.modalOverlay} onClick={() => setShowAdd(false)}>
@@ -2052,6 +2276,41 @@ const styles = {
     cursor: "pointer",
     marginTop: 4,
   },
+  inviteCodeRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+  },
+  inviteCodeText: {
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: 22,
+    letterSpacing: 3,
+    color: "#EFE7D2",
+    background: "rgba(184,135,74,0.12)",
+    border: "1px solid rgba(184,135,74,0.4)",
+    borderRadius: 4,
+    padding: "8px 16px",
+  },
+  friendRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    border: "1px solid rgba(201,194,172,0.14)",
+    borderRadius: 4,
+    padding: "10px 12px",
+  },
+  friendName: {
+    flex: 1,
+    fontFamily: "'Fraunces', serif",
+    fontSize: 14.5,
+    color: "#EFE7D2",
+  },
+  friendBookLine: {
+    fontSize: 12.5,
+    color: "#EFE7D2",
+    padding: "4px 0",
+    borderBottom: "1px solid rgba(201,194,172,0.08)",
+  },
   modalOverlay: {
     position: "fixed",
     inset: 0,
@@ -2169,6 +2428,7 @@ const styles = {
 function SignInScreen({ onSignIn, onSignUp, onReset, onClearStatus, error, busy, resetSent }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [mode, setMode] = useState("signin");
 
   function changeMode(next) {
@@ -2185,7 +2445,7 @@ function SignInScreen({ onSignIn, onSignUp, onReset, onClearStatus, error, busy,
     }
     if (!email.trim() || !password) return;
     if (mode === "signin") onSignIn(email.trim(), password);
-    else onSignUp(email.trim(), password);
+    else onSignUp(email.trim(), password, displayName.trim());
   }
 
   const subtitle =
@@ -2208,6 +2468,15 @@ function SignInScreen({ onSignIn, onSignUp, onReset, onClearStatus, error, busy,
         </div>
       ) : (
         <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%", maxWidth: 300 }}>
+          {mode === "signup" && (
+            <input
+              type="text"
+              placeholder="your name (shown to friends)"
+              value={displayName}
+              onChange={e => setDisplayName(e.target.value)}
+              style={styles.authInput}
+            />
+          )}
           <input
             type="email"
             autoCapitalize="none"
@@ -2298,10 +2567,36 @@ function App() {
       .finally(() => setAuthBusy(false));
   }
 
-  function handleSignUp(email, password) {
+  function generateInviteCode() {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O/1/I to avoid confusion
+    let code = "";
+    for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+    return code;
+  }
+
+  async function createProfile(uid, email, displayName) {
+    const db = firebase.firestore();
+    let code = null;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const candidate = generateInviteCode();
+      const codeDoc = await db.collection("inviteCodes").doc(candidate).get();
+      if (!codeDoc.exists) { code = candidate; break; }
+    }
+    if (!code) code = generateInviteCode() + Date.now().toString(36).slice(-2).toUpperCase();
+    await db.collection("users").doc(uid).set({
+      displayName: displayName || email.split("@")[0],
+      email,
+      inviteCode: code,
+      createdAt: Date.now(),
+    });
+    await db.collection("inviteCodes").doc(code).set({ uid });
+  }
+
+  function handleSignUp(email, password, displayName) {
     setAuthError("");
     setAuthBusy(true);
     firebase.auth().createUserWithEmailAndPassword(email, password)
+      .then(cred => createProfile(cred.user.uid, email, displayName))
       .catch(e => setAuthError(e.message))
       .finally(() => setAuthBusy(false));
   }

@@ -1,8 +1,45 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /users/{userId}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+    // Invite codes: any signed-in user can look one up (to add a friend) or create
+    // their own (during signup). Codes are never deleted or reassigned once created.
+    match /inviteCodes/{code} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    match /users/{userId} {
+      // Profile doc (displayName, email, inviteCode): readable by any signed-in user
+      // (needed so friends can see each other's display name), writable only by its owner.
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+
+      // Friends subcollection: a doc at friends/{friendId} means "userId considers
+      // friendId a friend." Readable by either party. Writable by the list owner
+      // (managing your own friends), OR by the friend themselves registering the
+      // reciprocal half of a mutual add (their doc ID must equal their own uid).
+      match /friends/{friendId} {
+        allow read: if request.auth != null && (request.auth.uid == userId || request.auth.uid == friendId);
+        allow create: if request.auth != null && (request.auth.uid == userId || request.auth.uid == friendId);
+        allow delete: if request.auth != null && (request.auth.uid == userId || request.auth.uid == friendId);
+      }
+
+      // Private library data: only the owner, ever.
+      match /library/{docId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId
+          && docId != 'publicSummary';
+      }
+
+      // Public summary: owner, or anyone listed in the owner's friends subcollection.
+      match /library/publicSummary {
+        allow write: if request.auth != null && request.auth.uid == userId;
+        allow read: if request.auth != null && (
+          request.auth.uid == userId ||
+          exists(/databases/$(database)/documents/users/$(userId)/friends/$(request.auth.uid))
+        );
+      }
     }
   }
 }
