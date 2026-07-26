@@ -133,15 +133,31 @@ const CSV_COLUMNS = [
 function normalizeStatus(raw) {
   const s = (raw || "").trim().toLowerCase();
   if (["read", "finished", "complete", "completed"].includes(s)) return "Read";
-  if (["in progress", "reading", "currently reading", "started"].includes(s)) return "In Progress";
+  if (["in progress", "reading", "currently reading", "currently-reading", "started"].includes(s)) return "In Progress";
   if (["dnf", "did not finish", "did not finish (dnf)", "abandoned"].includes(s)) return "DNF";
-  if (["tbr", "to be read", "to read", "want to read", "unread", "shelved"].includes(s)) return "TBR";
-  return "TBR";
+  if (["tbr", "to be read", "to-read", "to read", "want to read", "unread", "shelved"].includes(s)) return "TBR";
+  return null; // unrecognized - let the caller decide on a fallback
 }
 
-// Accepts "YYYY-MM-DD", "YYYY-MM", or "YYYY" and returns whichever precision was given.
+// Goodreads' "Exclusive Shelf" column uses its own fixed vocabulary rather than free text.
+function normalizeGoodreadsShelf(raw) {
+  const s = (raw || "").trim().toLowerCase();
+  if (s === "read") return "Read";
+  if (s === "currently-reading") return "In Progress";
+  if (s === "to-read") return "TBR";
+  return null;
+}
+
+// Goodreads embeds series info right in the title, e.g. "Dune Messiah (Dune Chronicles, #2)".
+function extractSeriesFromTitle(rawTitle) {
+  const m = rawTitle.match(/^(.*?)\s*\(([^,()]+),\s*#?(\d+(?:\.\d+)?)\)\s*$/);
+  if (m) return { title: m[1].trim(), series: m[2].trim(), seriesNum: Number(m[3]) };
+  return { title: rawTitle.trim(), series: null, seriesNum: null };
+}
+
+// Accepts "YYYY-MM-DD", "YYYY/MM/DD" (Goodreads' format), "YYYY-MM", or "YYYY".
 function parseFlexibleDate(raw) {
-  const s = (raw || "").trim();
+  const s = (raw || "").trim().replace(/\//g, "-");
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
     return { date: s, year: Number(s.slice(0, 4)), month: Number(s.slice(5, 7)) };
   }
@@ -190,23 +206,30 @@ function getField(row, ...names) {
 }
 
 function rowToBook(row, id, priority) {
-  const title = getField(row, "Title", "Book", "Book Title").toString().trim();
-  if (!title) return null;
+  const rawTitle = getField(row, "Title", "Book", "Book Title").toString().trim();
+  if (!rawTitle) return null;
+  const extracted = extractSeriesFromTitle(rawTitle);
 
-  const status = normalizeStatus(getField(row, "Status"));
+  // Prefer an explicit Status column; fall back to Goodreads' "Exclusive Shelf"; default to TBR.
+  const explicitStatus = getField(row, "Status");
+  const shelfStatus = getField(row, "Exclusive Shelf", "Bookshelf", "Shelf");
+  const status = (explicitStatus && normalizeStatus(explicitStatus))
+    || (shelfStatus && normalizeGoodreadsShelf(shelfStatus))
+    || "TBR";
+
   const started = parseFlexibleDate(getField(row, "Date Started", "Started", "Year Started"));
-  const completed = parseFlexibleDate(getField(row, "Date Completed", "Completed", "Finished", "Year Completed"));
-  const pages = Number(getField(row, "Pages", "Page Count")) || null;
+  const completed = parseFlexibleDate(getField(row, "Date Completed", "Completed", "Finished", "Date Read", "Year Completed"));
+  const pages = Number(getField(row, "Pages", "Page Count", "Number of Pages")) || null;
   const audioHours = Number(getField(row, "Audio Hours", "Audio Duration", "Audiobook Hours")) || null;
-  const seriesNum = Number(getField(row, "Series #", "Series Num", "Series Number")) || null;
-  const ratingRaw = Number(getField(row, "Rating"));
+  const seriesNum = Number(getField(row, "Series #", "Series Num", "Series Number")) || extracted.seriesNum;
+  const ratingRaw = Number(getField(row, "Rating", "My Rating"));
   const rating = ratingRaw ? Math.max(0.25, Math.min(5, ratingRaw)) : null;
 
   return {
     id,
-    title,
+    title: extracted.title,
     author: getField(row, "Author").toString().trim() || null,
-    series: getField(row, "Series").toString().trim() || null,
+    series: getField(row, "Series").toString().trim() || extracted.series,
     seriesNum,
     genre: getField(row, "Genre").toString().trim() || null,
     status,
@@ -318,8 +341,8 @@ function StarRating({ value, onChange, size = 15, readOnly = false }) {
               flexShrink: 0,
             }}
           >
-            <span style={{ position: "absolute", top: 0, left: 0, color: "rgba(122,107,76,0.3)" }}>â˜…</span>
-            <span style={{ position: "absolute", top: 0, left: 0, width: `${fillPct}%`, overflow: "hidden", whiteSpace: "nowrap", color: "#B8874A" }}>â˜…</span>
+            <span style={{ position: "absolute", top: 0, left: 0, color: "rgba(122,107,76,0.3)" }}>{"\u2605"}</span>
+            <span style={{ position: "absolute", top: 0, left: 0, width: `${fillPct}%`, overflow: "hidden", whiteSpace: "nowrap", color: "#B8874A" }}>{"\u2605"}</span>
           </span>
         );
       })}
@@ -378,8 +401,8 @@ function BookCard({ book, onStatusChange, onDelete, reorder, rank, onMoveUp, onM
             </span>
           )}
           <div style={styles.reorderBtns}>
-            <button style={{ ...styles.reorderBtn, opacity: canMoveUp ? 1 : 0.3, cursor: canMoveUp ? "pointer" : "default" }} onClick={() => canMoveUp && onMoveUp(book.id)} disabled={!canMoveUp} title="Move up the queue">â†‘</button>
-            <button style={{ ...styles.reorderBtn, opacity: canMoveDown ? 1 : 0.3, cursor: canMoveDown ? "pointer" : "default" }} onClick={() => canMoveDown && onMoveDown(book.id)} disabled={!canMoveDown} title="Move down the queue">â†“</button>
+            <button style={{ ...styles.reorderBtn, opacity: canMoveUp ? 1 : 0.3, cursor: canMoveUp ? "pointer" : "default" }} onClick={() => canMoveUp && onMoveUp(book.id)} disabled={!canMoveUp} title="Move up the queue">{"\u2191"}</button>
+            <button style={{ ...styles.reorderBtn, opacity: canMoveDown ? 1 : 0.3, cursor: canMoveDown ? "pointer" : "default" }} onClick={() => canMoveDown && onMoveDown(book.id)} disabled={!canMoveDown} title="Move down the queue">{"\u2193"}</button>
           </div>
         </div>
       )}
@@ -396,7 +419,7 @@ function BookCard({ book, onStatusChange, onDelete, reorder, rank, onMoveUp, onM
       <div style={styles.cardAuthor}>{book.author || "Unknown author"}</div>
 
       <div style={styles.cardSeries}>
-        {book.series ? `${book.series}${book.seriesNum ? ` Â· Book ${book.seriesNum}` : ""}` : "\u00A0"}
+        {book.series ? `${book.series}${book.seriesNum ? ` \u00b7 Book ${book.seriesNum}` : ""}` : "\u00A0"}
       </div>
 
       <div style={styles.cardMetaRow}>
@@ -463,8 +486,8 @@ function BookListRow({ book, onStatusChange, onDelete, onOpenEdit, reorder, rank
         <div style={styles.listRankBlock} onClick={e => e.stopPropagation()}>
           <span style={styles.rankBadge}>#{rank}</span>
           <div style={styles.reorderBtns}>
-            <button style={{ ...styles.reorderBtn, opacity: canMoveUp ? 1 : 0.3 }} onClick={() => canMoveUp && onMoveUp(book.id)} disabled={!canMoveUp}>â†‘</button>
-            <button style={{ ...styles.reorderBtn, opacity: canMoveDown ? 1 : 0.3 }} onClick={() => canMoveDown && onMoveDown(book.id)} disabled={!canMoveDown}>â†“</button>
+            <button style={{ ...styles.reorderBtn, opacity: canMoveUp ? 1 : 0.3 }} onClick={() => canMoveUp && onMoveUp(book.id)} disabled={!canMoveUp}>{"\u2191"}</button>
+            <button style={{ ...styles.reorderBtn, opacity: canMoveDown ? 1 : 0.3 }} onClick={() => canMoveDown && onMoveDown(book.id)} disabled={!canMoveDown}>{"\u2193"}</button>
           </div>
         </div>
       )}
@@ -478,10 +501,10 @@ function BookListRow({ book, onStatusChange, onDelete, onOpenEdit, reorder, rank
         </div>
         <div style={styles.listSubLine}>
           {book.author || "Unknown author"}
-          {book.series ? ` Â· ${book.series}${book.seriesNum ? " #" + book.seriesNum : ""}` : ""}
-          {book.pages ? ` Â· ${Math.round(book.pages)}p` : ""}
-          {audio ? ` Â· ${audio} audio` : ""}
-          {book.genre ? ` Â· ${book.genre}` : ""}
+          {book.series ? ` \u00b7 ${book.series}${book.seriesNum ? " #" + book.seriesNum : ""}` : ""}
+          {book.pages ? ` \u00b7 ${Math.round(book.pages)}p` : ""}
+          {audio ? ` \u00b7 ${audio} audio` : ""}
+          {book.genre ? ` \u00b7 ${book.genre}` : ""}
         </div>
       </div>
       <div style={styles.listActions} onClick={e => e.stopPropagation()}>
@@ -546,6 +569,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
   const [libGroupBy, setLibGroupBy] = useState("year");
   const [libSort, setLibSort] = useState("finish");
   const [importStatus, setImportStatus] = useState(null);
+  const [newGoalYear, setNewGoalYear] = useState("");
   const importFileRef = useRef(null);
   const [expandedYears, setExpandedYears] = useState(() => new Set());
   const [expandedStatsYears, setExpandedStatsYears] = useState(() => new Set());
@@ -718,13 +742,13 @@ function ReadingLedger({ uid, email, onSignOut }) {
   }
 
   function importCSV(file) {
-    setImportStatus({ state: "loading", message: "Reading fileâ€¦" });
+    setImportStatus({ state: "loading", message: "Reading file\u2026" });
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
         const parsed = Papa.parse(e.target.result, { header: true, skipEmptyLines: true });
         if (parsed.errors && parsed.errors.length > 0) {
-          setImportStatus({ state: "error", message: "Couldn't parse that file â€” make sure it's a CSV with a header row." });
+          setImportStatus({ state: "error", message: "Couldn't parse that file \u2014 make sure it's a CSV with a header row." });
           return;
         }
         let nextId = Math.max(0, ...books.map(b => b.id)) + 1;
@@ -739,7 +763,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
           }
         });
         if (newBooks.length === 0) {
-          setImportStatus({ state: "error", message: "No valid rows found â€” each row needs at least a Title." });
+          setImportStatus({ state: "error", message: "No valid rows found \u2014 each row needs at least a Title." });
           return;
         }
         persistBooks([...books, ...newBooks]);
@@ -1209,7 +1233,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
       }));
       setLookupDone(true);
     } catch (e) {
-      setLookupError(e.message || "Couldn't find that on Open Library â€” fill in what you know by hand.");
+      setLookupError(e.message || "Couldn't find that on Open Library \u2014 fill in what you know by hand.");
     }
     setLookupLoading(false);
   }
@@ -1234,7 +1258,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
       }));
       setEditLookupDone(true);
     } catch (e) {
-      setEditLookupError(e.message || "Couldn't find that on Open Library â€” fill in what you know by hand.");
+      setEditLookupError(e.message || "Couldn't find that on Open Library \u2014 fill in what you know by hand.");
     }
     setEditLookupLoading(false);
   }
@@ -1258,11 +1282,17 @@ function ReadingLedger({ uid, email, onSignOut }) {
     persistGoals({ ...goals, [year]: Number(value) || 0 });
   }
 
+  function removeGoalYear(year) {
+    const next = { ...goals };
+    delete next[year];
+    persistGoals(next);
+  }
+
   if (!books || !goals) {
     return (
       <div style={styles.loadingScreen}>
         <Loader2 className="spin" size={28} />
-        <div style={{ marginTop: 12, fontFamily: "'JetBrains Mono', monospace", fontSize: 13, letterSpacing: 1 }}>OPENING THE CATALOGâ€¦</div>
+        <div style={{ marginTop: 12, fontFamily: "'JetBrains Mono', monospace", fontSize: 13, letterSpacing: 1 }}>OPENING THE CATALOG\u2026</div>
       </div>
     );
   }
@@ -1330,7 +1360,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
         {tab === "dashboard" && (
           <div>
             <div style={styles.dashHero}>
-              <div style={styles.heroNumber}>{curStats.read}<span style={styles.heroOf}> / {curGoal || "â€”"}</span></div>
+              <div style={styles.heroNumber}>{curStats.read}<span style={styles.heroOf}> / {curGoal || "\u2014"}</span></div>
               <div style={styles.heroLabel}>books finished in {currentYear}</div>
               <div style={styles.shelf}>
                 {Array.from({ length: Math.max(curGoal, curStats.read, 1) }).map((_, i) => (
@@ -1340,7 +1370,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
               {curGoal > 0 && (
                 <div style={styles.heroSub}>
                   {curStats.read >= curGoal
-                    ? `Goal met â€” projected pace ${pace.toFixed(1)} books/yr`
+                    ? `Goal met \u2014 projected pace ${pace.toFixed(1)} books/yr`
                     : `On pace for ${pace.toFixed(1)} books this year, goal is ${curGoal}`}
                 </div>
               )}
@@ -1380,7 +1410,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
             <div style={styles.toolbar}>
               <div style={styles.searchWrap}>
                 <Search size={14} color="#8B8676" />
-                <input style={styles.searchInput} placeholder="Search title, author, seriesâ€¦" value={tbrSearch} onChange={e => setTbrSearch(e.target.value)} />
+                <input style={styles.searchInput} placeholder="Search title, author, series\u2026" value={tbrSearch} onChange={e => setTbrSearch(e.target.value)} />
               </div>
               <div style={styles.filterRowPair}>
                 <select className="selectHalf" style={styles.selectHalf} value={tbrGenre} onChange={e => setTbrGenre(e.target.value)}>
@@ -1404,7 +1434,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
             </div>
             <div style={styles.countLine}>
               {tbrBooks.length} book{tbrBooks.length !== 1 ? "s" : ""} on the shelf
-              {tbrSort === "priority" && " â€” use the arrows to rank what you want to read next"}
+              {tbrSort === "priority" && " \u2014 use the arrows to rank what you want to read next"}
             </div>
             {tbrViewMode === "tile" ? (
               <div className="cardGrid" style={styles.cardGrid}>
@@ -1453,7 +1483,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
             <div style={styles.toolbar}>
               <div style={styles.searchWrap}>
                 <Search size={14} color="#8B8676" />
-                <input style={styles.searchInput} placeholder="Search your libraryâ€¦" value={libSearch} onChange={e => setLibSearch(e.target.value)} />
+                <input style={styles.searchInput} placeholder="Search your library\u2026" value={libSearch} onChange={e => setLibSearch(e.target.value)} />
               </div>
               <div style={styles.filterRow}>
                 <select style={styles.select} value={libStatusFilter} onChange={e => setLibStatusFilter(e.target.value)}>
@@ -1534,7 +1564,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
             <div style={styles.toolbar}>
               <div style={styles.searchWrap}>
                 <Search size={14} color="#8B8676" />
-                <input style={styles.searchInput} placeholder="Search series or authorâ€¦" value={seriesSearch} onChange={e => setSeriesSearch(e.target.value)} />
+                <input style={styles.searchInput} placeholder="Search series or author\u2026" value={seriesSearch} onChange={e => setSeriesSearch(e.target.value)} />
               </div>
               <select style={styles.select} value={seriesStatusFilter} onChange={e => setSeriesStatusFilter(e.target.value)}>
                 <option value="All">All statuses</option>
@@ -1564,7 +1594,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
                       <span style={styles.seriesName}>{s.name}</span>
                       <span style={{ ...styles.stamp, color: cfg, borderColor: cfg }}>{s.status.toUpperCase()}</span>
                     </div>
-                    <div style={styles.seriesAuthor}>{s.author || "Unknown author"}{s.ongoing ? " Â· ongoing" : ""}</div>
+                    <div style={styles.seriesAuthor}>{s.author || "Unknown author"}{s.ongoing ? " \u00b7 ongoing" : ""}</div>
                     <div style={styles.seriesProgressRow}>
                       <div style={styles.seriesProgressTrack}>
                         <div style={{ ...styles.seriesProgressFill, width: `${pct}%`, background: cfg }} />
@@ -1591,7 +1621,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
                   <button style={styles.closeBtn} onClick={() => setSelectedSeriesName(null)}><X size={16} /></button>
                 </div>
                 <div style={{ fontSize: 12.5, color: "#8B8676", marginBottom: 4 }}>
-                  {s.author || "Unknown author"}{s.ongoing ? " Â· ongoing" : ""}
+                  {s.author || "Unknown author"}{s.ongoing ? " \u00b7 ongoing" : ""}
                 </div>
                 <div style={styles.seriesProgressRow}>
                   <div style={styles.seriesProgressTrack}>
@@ -1623,11 +1653,11 @@ function ReadingLedger({ uid, email, onSignOut }) {
 
                 <button style={styles.lookupBtn} onClick={() => lookupSeriesTotal(s)} disabled={seriesLookupLoading}>
                   {seriesLookupLoading ? <Loader2 size={14} className="spin" /> : <Search size={14} />}
-                  {seriesLookupLoading ? "Checking Open Libraryâ€¦" : "Look up total books in series"}
+                  {seriesLookupLoading ? "Checking Open Library\u2026" : "Look up total books in series"}
                 </button>
                 {seriesLookupError && <div style={styles.lookupError}>{seriesLookupError}</div>}
                 {s.totalBooksOverridden && !seriesLookupError && (
-                  <div style={styles.lookupSuccess}>Open Library's count is a rough estimate â€” double check it, or type the real number above.</div>
+                  <div style={styles.lookupSuccess}>Open Library's count is a rough estimate \u2014 double check it, or type the real number above.</div>
                 )}
 
                 <button
@@ -1727,9 +1757,9 @@ function ReadingLedger({ uid, email, onSignOut }) {
                         >
                           <td style={styles.td}>{expanded ? <ChevronDown size={13} /> : <ChevronRight size={13} />}</td>
                           <td style={styles.td}>{y}</td>
-                          <td style={styles.td}>{g || "â€”"}</td>
+                          <td style={styles.td}>{g || "\u2014"}</td>
                           <td style={styles.td}>{s.read}</td>
-                          <td style={styles.td}>{pct !== null ? `${pct}%` : "â€”"}</td>
+                          <td style={styles.td}>{pct !== null ? `${pct}%` : "\u2014"}</td>
                           <td style={styles.td}>{Math.round(s.pages).toLocaleString()}</td>
                           <td style={styles.td}>{s.audio.toFixed(1)}</td>
                         </tr>
@@ -1785,23 +1815,55 @@ function ReadingLedger({ uid, email, onSignOut }) {
           <div>
             <div style={styles.sectionTitle}>Reading goals by year</div>
             <div style={styles.goalsList}>
-              {allYears.map(y => (
-                <div key={y} style={styles.goalRow}>
-                  <span style={styles.goalYear}>{y}</span>
-                  <input
-                    style={styles.goalInput}
-                    type="number"
-                    min="0"
-                    value={goals[y] ?? ""}
-                    onChange={e => updateGoal(y, e.target.value)}
-                    placeholder="0"
-                  />
-                  <span style={styles.goalSuffix}>books</span>
-                  <span style={styles.goalActual}>
-                    {(yearStats[y] || { read: 0 }).read} read{y === currentYear ? " so far" : ""}
-                  </span>
-                </div>
-              ))}
+              {allYears.map(y => {
+                const hasBooks = !!(yearStats[y] && yearStats[y].read > 0);
+                return (
+                  <div key={y} style={styles.goalRow}>
+                    <span style={styles.goalYear}>{y}</span>
+                    <input
+                      style={styles.goalInput}
+                      type="number"
+                      min="0"
+                      value={goals[y] ?? ""}
+                      onChange={e => updateGoal(y, e.target.value)}
+                      placeholder="0"
+                    />
+                    <span style={styles.goalSuffix}>books</span>
+                    <span style={styles.goalActual}>
+                      {(yearStats[y] || { read: 0 }).read} read{y === currentYear ? " so far" : ""}
+                    </span>
+                    <button
+                      style={styles.deleteBtn}
+                      onClick={() => removeGoalYear(y)}
+                      title={hasBooks ? "Clears the goal (the year stays, since you've logged books in it)" : "Remove this year"}
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                );
+              })}
+
+              <div style={styles.addYearRow}>
+                <input
+                  type="number"
+                  style={{ ...styles.goalInput, width: 90 }}
+                  placeholder="Year"
+                  value={newGoalYear}
+                  onChange={e => setNewGoalYear(e.target.value)}
+                />
+                <button
+                  style={styles.addYearBtn}
+                  onClick={() => {
+                    const y = Number(newGoalYear);
+                    if (!y) return;
+                    updateGoal(y, goals[y] ?? 0);
+                    setNewGoalYear("");
+                  }}
+                >
+                  <Plus size={14} /> Add this year
+                </button>
+              </div>
+
               <button
                 style={styles.addYearBtn}
                 onClick={() => {
@@ -1820,7 +1882,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
             <div style={styles.sectionBlock}>
               <div style={styles.sectionTitle}>Your invite code</div>
               <div style={styles.inviteCodeRow}>
-                <span style={styles.inviteCodeText}>{profile ? profile.inviteCode : "â€¦"}</span>
+                <span style={styles.inviteCodeText}>{profile ? profile.inviteCode : "\u2026"}</span>
                 <button
                   style={styles.addBtn}
                   onClick={() => profile && navigator.clipboard && navigator.clipboard.writeText(profile.inviteCode)}
@@ -1829,7 +1891,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
                 </button>
               </div>
               <div style={{ fontSize: 11.5, color: "#8B8676", marginTop: 6 }}>
-                Share this code with a friend so they can add you. Adding each other is mutual â€” you'll both see each other's currently-reading, finished books, and yearly stats. Your to-be-read list and quotes stay private.
+                Share this code with a friend so they can add you. Adding each other is mutual \u2014 you'll both see each other's currently-reading, finished books, and yearly stats. Your to-be-read list and quotes stay private.
               </div>
             </div>
 
@@ -1888,7 +1950,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
                     <div style={{ ...styles.sectionTitle, fontSize: 15 }}>Currently reading</div>
                     {friendSummary.currentlyReading.map((b, i) => (
                       <div key={i} style={styles.friendBookLine}>
-                        {b.title}{b.author ? ` â€” ${b.author}` : ""}{b.series ? ` (${b.series}${b.seriesNum ? " #" + b.seriesNum : ""})` : ""}
+                        {b.title}{b.author ? ` \u2014 ${b.author}` : ""}{b.series ? ` (${b.series}${b.seriesNum ? " #" + b.seriesNum : ""})` : ""}
                       </div>
                     ))}
                   </div>
@@ -1900,7 +1962,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
                     const g = Number((friendSummary.goals || {})[new Date().getFullYear()]) || 0;
                     return (
                       <div style={{ fontSize: 12.5, color: "#8B8676" }}>
-                        {s.read} book{s.read !== 1 ? "s" : ""} finished{g ? ` (goal: ${g})` : ""} Â· {Math.round(s.pages).toLocaleString()} pages Â· {s.audio.toFixed(1)} audio hrs
+                        {s.read} book{s.read !== 1 ? "s" : ""} finished{g ? ` (goal: ${g})` : ""} \u00b7 {Math.round(s.pages).toLocaleString()} pages \u00b7 {s.audio.toFixed(1)} audio hrs
                       </div>
                     );
                   })()}
@@ -1909,7 +1971,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
                   <div style={{ ...styles.sectionTitle, fontSize: 15 }}>Recently finished</div>
                   {(friendSummary.read || []).slice(0, 10).map((b, i) => (
                     <div key={i} style={styles.friendBookLine}>
-                      {b.title}{b.author ? ` â€” ${b.author}` : ""}
+                      {b.title}{b.author ? ` \u2014 ${b.author}` : ""}
                       {b.yearCompleted ? ` (${monthName(b.monthCompleted)} ${b.yearCompleted})` : ""}
                     </div>
                   ))}
@@ -1935,14 +1997,14 @@ function ReadingLedger({ uid, email, onSignOut }) {
             <input style={styles.input} value={newBook.title} onChange={e => setNewBook({ ...newBook, title: e.target.value })} placeholder="e.g. The Name of the Wind" />
 
             <label style={styles.label}>Author</label>
-            <input style={styles.input} value={newBook.author} onChange={e => setNewBook({ ...newBook, author: e.target.value })} placeholder="optional â€” lookup can fill this in" />
+            <input style={styles.input} value={newBook.author} onChange={e => setNewBook({ ...newBook, author: e.target.value })} placeholder="optional \u2014 lookup can fill this in" />
 
             <button style={styles.lookupBtn} onClick={lookupDetails} disabled={lookupLoading}>
               {lookupLoading ? <Loader2 size={14} className="spin" /> : <Search size={14} />}
-              {lookupLoading ? "Checking Open Libraryâ€¦" : "Look up details"}
+              {lookupLoading ? "Checking Open Library\u2026" : "Look up details"}
             </button>
             {lookupError && <div style={styles.lookupError}>{lookupError}</div>}
-            {lookupDone && !lookupError && <div style={styles.lookupSuccess}>Filled in from Open Library â€” check it over below (audio length isn't available from this source).</div>}
+            {lookupDone && !lookupError && <div style={styles.lookupSuccess}>Filled in from Open Library \u2014 check it over below (audio length isn't available from this source).</div>}
 
             <div style={styles.gridTwo}>
               <div>
@@ -1996,10 +2058,10 @@ function ReadingLedger({ uid, email, onSignOut }) {
 
             <button style={styles.lookupBtn} onClick={lookupEditDetails} disabled={editLookupLoading}>
               {editLookupLoading ? <Loader2 size={14} className="spin" /> : <Search size={14} />}
-              {editLookupLoading ? "Checking Open Libraryâ€¦" : "Look up details"}
+              {editLookupLoading ? "Checking Open Library\u2026" : "Look up details"}
             </button>
             {editLookupError && <div style={styles.lookupError}>{editLookupError}</div>}
-            {editLookupDone && !editLookupError && <div style={styles.lookupSuccess}>Filled in from Open Library â€” check it over below (audio length isn't available from this source).</div>}
+            {editLookupDone && !editLookupError && <div style={styles.lookupSuccess}>Filled in from Open Library \u2014 check it over below (audio length isn't available from this source).</div>}
 
             <div style={styles.gridTwo}>
               <div>
@@ -2045,11 +2107,11 @@ function ReadingLedger({ uid, email, onSignOut }) {
 
             {editDraft.status === "Read" && (
               <div>
-                <label style={styles.label}>Your rating (tap a star â€” left/right side picks the quarter)</label>
+                <label style={styles.label}>Your rating (tap a star \u2014 left/right side picks the quarter)</label>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <StarRating value={editDraft.rating} size={22} onChange={n => setEditDraft({ ...editDraft, rating: n })} />
                   <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "#8B8676", minWidth: 34 }}>
-                    {editDraft.rating ? editDraft.rating.toFixed(2).replace(/\.?0+$/, "") : "â€”"}
+                    {editDraft.rating ? editDraft.rating.toFixed(2).replace(/\.?0+$/, "") : "\u2014"}
                   </span>
                   {editDraft.rating ? (
                     <button
@@ -2852,6 +2914,12 @@ const styles = {
     borderRadius: 3,
     padding: "10px 12px",
   },
+  addYearRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    marginTop: 4,
+  },
   goalYear: {
     fontFamily: "'Fraunces', serif",
     fontSize: 16,
@@ -3074,7 +3142,7 @@ function SignInScreen({ onSignIn, onSignUp, onReset, onClearStatus, error, busy,
         The Reading Ledger
       </div>
       <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "#8B8676", marginBottom: 24, textAlign: "center", maxWidth: 300 }}>
-        {subtitle}{mode !== "reset" ? " â€” your data is private to your account" : ""}
+        {subtitle}{mode !== "reset" ? " \u2014 your data is private to your account" : ""}
       </div>
 
       {mode === "reset" && resetSent ? (
