@@ -891,43 +891,62 @@ function ReadingLedger({ uid, email, onSignOut }) {
     setShowAdd(false);
   }
 
-  async function askClaudeForJSON(prompt) {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 1000,
-        messages: [{ role: "user", content: prompt }],
-        tools: [{ type: "web_search_20250305", name: "web_search" }],
-      }),
-    });
-    const data = await response.json();
-    const textBlocks = (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n");
-    const clean = textBlocks.replace(/```json|```/g, "").trim();
-    const start = clean.indexOf("{");
-    const end = clean.lastIndexOf("}");
-    if (start === -1 || end === -1) throw new Error("No JSON found");
-    return JSON.parse(clean.slice(start, end + 1));
+  function parseSeriesString(raw) {
+    // Open Library sometimes returns series as "Name #3" or "Name, Book 3" - try to split those out.
+    const m = raw.match(/^(.*?)[,]?\s*(?:#|book\s*)(\d+(?:\.\d+)?)\s*$/i);
+    if (m) return { series: m[1].trim(), seriesNum: Number(m[2]) };
+    return { series: raw.trim(), seriesNum: null };
+  }
+
+  function pickGenreFromSubjects(subjects) {
+    if (!subjects || subjects.length === 0) return null;
+    const clean = subjects.filter(s => s.length < 28 && !/[:0-9]/.test(s));
+    return clean.slice(0, 2).join(", ") || null;
   }
 
   async function fetchBookDetails(title, author) {
-    const prompt = `Search the web for the book "${title}"${author ? " by " + author : ""}. ` +
-      `Reply with ONLY a raw JSON object, no markdown code fences, no commentary before or after. ` +
-      `Use exactly these keys: "author" (string, the author's full name(s)), "series" (string or null, the series name if part of one, else null), ` +
-      `"seriesNum" (number or null, position in the series), "pages" (number or null, print page count), ` +
-      `"audioHours" (number or null, audiobook length in decimal hours, e.g. 12.5), "genre" (short string like "Fantasy" or "Sci-Fi"). ` +
-      `If you cannot find a field, use null for it. Do not guess wildly; prefer null over a fabricated number.`;
-    return askClaudeForJSON(prompt);
+    const params = new URLSearchParams();
+    params.set("title", title);
+    if (author) params.set("author", author);
+    params.set("limit", "5");
+    params.set("fields", "title,author_name,number_of_pages_median,subject,series,first_publish_year");
+    const res = await fetch(`https://openlibrary.org/search.json?${params.toString()}`);
+    if (!res.ok) throw new Error("Open Library request failed (" + res.status + ")");
+    const data = await res.json();
+    if (!data.docs || data.docs.length === 0) throw new Error("No match found on Open Library.");
+
+    let doc = data.docs[0];
+    if (author) {
+      const authorLower = author.toLowerCase();
+      const better = data.docs.find(d => (d.author_name || []).some(a => a.toLowerCase().includes(authorLower) || authorLower.includes(a.toLowerCase())));
+      if (better) doc = better;
+    }
+
+    const seriesRaw = doc.series && doc.series[0];
+    const seriesInfo = seriesRaw ? parseSeriesString(seriesRaw) : { series: null, seriesNum: null };
+
+    return {
+      author: (doc.author_name && doc.author_name[0]) || null,
+      series: seriesInfo.series,
+      seriesNum: seriesInfo.seriesNum,
+      pages: doc.number_of_pages_median || null,
+      audioHours: null, // not available from Open Library's free catalog data
+      genre: pickGenreFromSubjects(doc.subject),
+    };
   }
 
   async function fetchSeriesDetails(seriesName, author) {
-    const prompt = `Search the web for the book series "${seriesName}"${author ? " by " + author : ""}. ` +
-      `Reply with ONLY a raw JSON object, no markdown code fences, no commentary before or after. ` +
-      `Use exactly these keys: "totalBooks" (number or null, the total number of main-series books, published or planned), ` +
-      `"ongoing" (boolean or null, true if the series is not yet complete / more books are expected). ` +
-      `If you cannot find a field confidently, use null for it. Do not guess wildly.`;
-    return askClaudeForJSON(prompt);
+    const params = new URLSearchParams();
+    params.set("q", `series:"${seriesName}"`);
+    if (author) params.set("author", author);
+    params.set("fields", "title");
+    params.set("limit", "100");
+    const res = await fetch(`https://openlibrary.org/search.json?${params.toString()}`);
+    if (!res.ok) throw new Error("Open Library request failed (" + res.status + ")");
+    const data = await res.json();
+    const uniqueTitles = new Set((data.docs || []).map(d => (d.title || "").toLowerCase().trim()));
+    if (uniqueTitles.size === 0) throw new Error("Open Library doesn't have this series catalogued under that name.");
+    return { totalBooks: uniqueTitles.size, ongoing: null };
   }
 
   async function lookupDetails() {
@@ -950,7 +969,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
       }));
       setLookupDone(true);
     } catch (e) {
-      setLookupError("Couldn't fetch details automatically — fill in what you know by hand.");
+      setLookupError(e.message || "Couldn't find that on Open Library — fill in what you know by hand.");
     }
     setLookupLoading(false);
   }
@@ -975,7 +994,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
       }));
       setEditLookupDone(true);
     } catch (e) {
-      setEditLookupError("Couldn't fetch details automatically — fill in what you know by hand.");
+      setEditLookupError(e.message || "Couldn't find that on Open Library — fill in what you know by hand.");
     }
     setEditLookupLoading(false);
   }
@@ -990,7 +1009,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
       if (parsed.ongoing != null) patch.ongoingOverride = !!parsed.ongoing;
       updateSeriesOverride(seriesRow.name, patch);
     } catch (e) {
-      setSeriesLookupError("Couldn't fetch details automatically.");
+      setSeriesLookupError(e.message || "Couldn't find that series on Open Library.");
     }
     setSeriesLookupLoading(false);
   }
@@ -1316,8 +1335,8 @@ function ReadingLedger({ uid, email, onSignOut }) {
                 </div>
 
                 <button style={styles.lookupBtn} onClick={() => lookupSeriesTotal(s)} disabled={seriesLookupLoading}>
-                  {seriesLookupLoading ? <Loader2 size={14} className="spin" /> : <Sparkles size={14} />}
-                  {seriesLookupLoading ? "Searching the web…" : "Look up total books in series"}
+                  {seriesLookupLoading ? <Loader2 size={14} className="spin" /> : <Search size={14} />}
+                  {seriesLookupLoading ? "Checking Open Library…" : "Look up total books in series"}
                 </button>
                 {seriesLookupError && <div style={styles.lookupError}>{seriesLookupError}</div>}
                 {s.totalBooksOverridden && !seriesLookupError && (
@@ -1595,11 +1614,11 @@ function ReadingLedger({ uid, email, onSignOut }) {
             <input style={styles.input} value={newBook.author} onChange={e => setNewBook({ ...newBook, author: e.target.value })} placeholder="optional — lookup can fill this in" />
 
             <button style={styles.lookupBtn} onClick={lookupDetails} disabled={lookupLoading}>
-              {lookupLoading ? <Loader2 size={14} className="spin" /> : <Sparkles size={14} />}
-              {lookupLoading ? "Searching the web…" : "Look up details"}
+              {lookupLoading ? <Loader2 size={14} className="spin" /> : <Search size={14} />}
+              {lookupLoading ? "Checking Open Library…" : "Look up details"}
             </button>
             {lookupError && <div style={styles.lookupError}>{lookupError}</div>}
-            {lookupDone && !lookupError && <div style={styles.lookupSuccess}>Filled in from web search — check it over below.</div>}
+            {lookupDone && !lookupError && <div style={styles.lookupSuccess}>Filled in from Open Library — check it over below (audio length isn't available from this source).</div>}
 
             <div style={styles.gridTwo}>
               <div>
@@ -1652,11 +1671,11 @@ function ReadingLedger({ uid, email, onSignOut }) {
             <input style={styles.input} value={editDraft.author} onChange={e => setEditDraft({ ...editDraft, author: e.target.value })} />
 
             <button style={styles.lookupBtn} onClick={lookupEditDetails} disabled={editLookupLoading}>
-              {editLookupLoading ? <Loader2 size={14} className="spin" /> : <Sparkles size={14} />}
-              {editLookupLoading ? "Searching the web…" : "Look up details"}
+              {editLookupLoading ? <Loader2 size={14} className="spin" /> : <Search size={14} />}
+              {editLookupLoading ? "Checking Open Library…" : "Look up details"}
             </button>
             {editLookupError && <div style={styles.lookupError}>{editLookupError}</div>}
-            {editLookupDone && !editLookupError && <div style={styles.lookupSuccess}>Filled in from web search — check it over below.</div>}
+            {editLookupDone && !editLookupError && <div style={styles.lookupSuccess}>Filled in from Open Library — check it over below (audio length isn't available from this source).</div>}
 
             <div style={styles.gridTwo}>
               <div>
