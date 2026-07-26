@@ -58,6 +58,16 @@ function FriendsIcon({ size = 14 }) {
   );
 }
 
+function MenuIcon({ size = 20 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="4" y1="7" x2="20" y2="7" />
+      <line x1="4" y1="12" x2="20" y2="12" />
+      <line x1="4" y1="17" x2="20" y2="17" />
+    </svg>
+  );
+}
+
 const DATA_VERSION = 2;
 const STATUS_ORDER = ["In Progress", "TBR", "Read", "DNF"];
 const STATUS_LABEL = {
@@ -570,6 +580,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
   const [libSort, setLibSort] = useState("finish");
   const [importStatus, setImportStatus] = useState(null);
   const [importMode, setImportMode] = useState("skipDuplicates");
+  const [menuOpen, setMenuOpen] = useState(false);
   const [newGoalYear, setNewGoalYear] = useState("");
   const importFileRef = useRef(null);
   const [expandedYears, setExpandedYears] = useState(() => new Set());
@@ -1382,10 +1393,9 @@ function ReadingLedger({ uid, email, onSignOut }) {
             <div style={styles.brand}>The Reading Ledger</div>
             <div style={styles.brandSub}>a running catalog of what's read, what's shelved, what's next</div>
           </div>
-          <div style={styles.accountRow}>
-            <span style={styles.accountEmail}>{email}</span>
-            <button style={styles.signOutBtn} onClick={onSignOut}>Sign out</button>
-          </div>
+          <button style={styles.menuBtn} onClick={() => setMenuOpen(true)} title="Menu">
+            <MenuIcon size={20} />
+          </button>
         </div>
       </div>
 
@@ -1560,30 +1570,6 @@ function ReadingLedger({ uid, email, onSignOut }) {
               </div>
             </div>
 
-            <div style={styles.importExportRow}>
-              <button style={styles.addBtn} onClick={exportCSV}>
-                <Download size={14} /> Export to CSV
-              </button>
-              <select style={styles.select} value={importMode} onChange={e => setImportMode(e.target.value)}>
-                <option value="skipDuplicates">Import: skip books already in library</option>
-                <option value="append">Import: add all rows (even duplicates)</option>
-                <option value="replace">Import: replace entire library</option>
-              </select>
-              <button style={styles.addBtn} onClick={() => importFileRef.current && importFileRef.current.click()}>
-                <Upload size={14} /> Import from CSV
-              </button>
-              <input
-                ref={importFileRef}
-                type="file"
-                accept=".csv,text/csv"
-                style={{ display: "none" }}
-                onChange={e => {
-                  const file = e.target.files && e.target.files[0];
-                  if (file) importCSV(file, importMode);
-                  e.target.value = "";
-                }}
-              />
-            </div>
             {importStatus && (
               <div style={importStatus.state === "error" ? styles.lookupError : styles.lookupSuccess}>
                 {importStatus.message}
@@ -2193,6 +2179,65 @@ function ReadingLedger({ uid, email, onSignOut }) {
           </div>
         </div>
       )}
+
+      {menuOpen && (
+        <div style={styles.modalOverlay} onClick={() => setMenuOpen(false)}>
+          <div style={styles.modal} onClick={e => e.stopPropagation()}>
+            <div style={styles.modalHeader}>
+              <span>Menu</span>
+              <button style={styles.closeBtn} onClick={() => setMenuOpen(false)}><X size={16} /></button>
+            </div>
+
+            <div style={styles.menuAccountRow}>
+              <span style={styles.menuEmail}>{email}</span>
+              <button style={styles.signOutBtn} onClick={onSignOut}>Sign out</button>
+            </div>
+
+            <div style={styles.menuDivider} />
+
+            <button
+              style={styles.menuActionBtn}
+              onClick={() => { setMenuOpen(false); setShowAdd(true); }}
+            >
+              <Plus size={15} /> Add a book
+            </button>
+
+            <div style={styles.menuDivider} />
+
+            <div style={{ ...styles.label, marginTop: 0 }}>Import / Export</div>
+            <button style={styles.menuActionBtn} onClick={exportCSV}>
+              <Download size={15} /> Export to CSV
+            </button>
+            <select style={{ ...styles.select, width: "100%", marginTop: 8 }} value={importMode} onChange={e => setImportMode(e.target.value)}>
+              <option value="skipDuplicates">Import: skip books already in library</option>
+              <option value="append">Import: add all rows (even duplicates)</option>
+              <option value="replace">Import: replace entire library</option>
+            </select>
+            <button
+              style={{ ...styles.menuActionBtn, marginTop: 8 }}
+              onClick={() => importFileRef.current && importFileRef.current.click()}
+            >
+              <Upload size={15} /> Import from CSV
+            </button>
+            <input
+              ref={importFileRef}
+              type="file"
+              accept=".csv,text/csv"
+              style={{ display: "none" }}
+              onChange={e => {
+                const file = e.target.files && e.target.files[0];
+                if (file) importCSV(file, importMode);
+                e.target.value = "";
+              }}
+            />
+            {importStatus && (
+              <div style={{ ...(importStatus.state === "error" ? styles.lookupError : styles.lookupSuccess), marginTop: 8 }}>
+                {importStatus.message}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -2235,6 +2280,47 @@ const styles = {
     alignItems: "flex-start",
     gap: 12,
     flexWrap: "wrap",
+  },
+  menuBtn: {
+    background: "transparent",
+    border: "1px solid rgba(201,194,172,0.25)",
+    color: "#EFE7D2",
+    borderRadius: 4,
+    padding: "8px 10px",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+  },
+  menuAccountRow: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+    marginBottom: 4,
+  },
+  menuEmail: {
+    fontSize: 11.5,
+    color: "#8B8676",
+    fontFamily: "'JetBrains Mono', monospace",
+    wordBreak: "break-all",
+  },
+  menuDivider: {
+    borderTop: "1px dashed rgba(201,194,172,0.2)",
+    margin: "14px 0",
+  },
+  menuActionBtn: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    width: "100%",
+    background: "rgba(184,135,74,0.12)",
+    border: "1px solid rgba(184,135,74,0.4)",
+    color: "#EFE7D2",
+    borderRadius: 4,
+    padding: "10px 12px",
+    fontSize: 13.5,
+    cursor: "pointer",
+    marginTop: 6,
   },
   accountRow: {
     display: "flex",
