@@ -24,6 +24,8 @@ function Play(props) { return <Icon {...props}><polygon points="6 3 20 12 6 21 6
 function CheckCircle2(props) { return <Icon {...props}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></Icon>; }
 function BookX(props) { return <Icon {...props}><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /><line x1="10" y1="8" x2="14" y2="12" /><line x1="14" y1="8" x2="10" y2="12" /></Icon>; }
 function Quote(props) { return <Icon {...props}><path d="M3 21c3 0 7-1.5 7-8V5H3v8h4c0 4-1 6-4 6z" /><path d="M14 21c3 0 7-1.5 7-8V5h-7v8h4c0 4-1 6-4 6z" /></Icon>; }
+function Download(props) { return <Icon {...props}><path d="M12 3v12" /><path d="M7 10l5 5 5-5" /><path d="M4 21h16" /></Icon>; }
+function Upload(props) { return <Icon {...props}><path d="M12 21V9" /><path d="M7 14l5-5 5 5" /><path d="M4 21h16" /></Icon>; }
 
 function StatsIcon({ size = 14 }) {
   return (
@@ -120,6 +122,108 @@ async function ensureUserProfile(uid, email, displayName) {
 
 function todayISO(){
   return new Date().toISOString().slice(0,10);
+}
+
+const CSV_COLUMNS = [
+  "Title", "Author", "Series", "Series #", "Genre", "Status",
+  "Pages", "Audio Hours", "Rating",
+  "Date Started", "Date Completed", "Quote",
+];
+
+function normalizeStatus(raw) {
+  const s = (raw || "").trim().toLowerCase();
+  if (["read", "finished", "complete", "completed"].includes(s)) return "Read";
+  if (["in progress", "reading", "currently reading", "started"].includes(s)) return "In Progress";
+  if (["dnf", "did not finish", "did not finish (dnf)", "abandoned"].includes(s)) return "DNF";
+  if (["tbr", "to be read", "to read", "want to read", "unread", "shelved"].includes(s)) return "TBR";
+  return "TBR";
+}
+
+// Accepts "YYYY-MM-DD", "YYYY-MM", or "YYYY" and returns whichever precision was given.
+function parseFlexibleDate(raw) {
+  const s = (raw || "").trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    return { date: s, year: Number(s.slice(0, 4)), month: Number(s.slice(5, 7)) };
+  }
+  if (/^\d{4}-\d{2}$/.test(s)) {
+    return { date: null, year: Number(s.slice(0, 4)), month: Number(s.slice(5, 7)) };
+  }
+  if (/^\d{4}$/.test(s)) {
+    return { date: null, year: Number(s), month: null };
+  }
+  return { date: null, year: null, month: null };
+}
+
+function formatFlexibleDate(dateStr, year, month) {
+  if (dateStr) return dateStr;
+  if (year && month) return `${year}-${String(month).padStart(2, "0")}`;
+  if (year) return String(year);
+  return "";
+}
+
+function bookToRow(b) {
+  return {
+    "Title": b.title || "",
+    "Author": b.author || "",
+    "Series": b.series || "",
+    "Series #": b.seriesNum != null ? b.seriesNum : "",
+    "Genre": b.genre || "",
+    "Status": b.status || "TBR",
+    "Pages": b.pages != null ? b.pages : "",
+    "Audio Hours": b.audioHours != null ? b.audioHours : "",
+    "Rating": b.rating != null ? b.rating : "",
+    "Date Started": formatFlexibleDate(b.dateStarted, b.yearStarted, b.monthStarted),
+    "Date Completed": formatFlexibleDate(b.dateCompleted, b.yearCompleted, b.monthCompleted),
+    "Quote": b.quote || "",
+  };
+}
+
+// Case/spacing-insensitive header lookup, so CSVs from other tools (slightly different column names) still work.
+function getField(row, ...names) {
+  const keys = Object.keys(row);
+  for (const name of names) {
+    const target = name.trim().toLowerCase();
+    const key = keys.find(k => k.trim().toLowerCase() === target);
+    if (key !== undefined && row[key] !== undefined && row[key] !== "") return row[key];
+  }
+  return "";
+}
+
+function rowToBook(row, id, priority) {
+  const title = getField(row, "Title", "Book", "Book Title").toString().trim();
+  if (!title) return null;
+
+  const status = normalizeStatus(getField(row, "Status"));
+  const started = parseFlexibleDate(getField(row, "Date Started", "Started", "Year Started"));
+  const completed = parseFlexibleDate(getField(row, "Date Completed", "Completed", "Finished", "Year Completed"));
+  const pages = Number(getField(row, "Pages", "Page Count")) || null;
+  const audioHours = Number(getField(row, "Audio Hours", "Audio Duration", "Audiobook Hours")) || null;
+  const seriesNum = Number(getField(row, "Series #", "Series Num", "Series Number")) || null;
+  const ratingRaw = Number(getField(row, "Rating"));
+  const rating = ratingRaw ? Math.max(0.25, Math.min(5, ratingRaw)) : null;
+
+  return {
+    id,
+    title,
+    author: getField(row, "Author").toString().trim() || null,
+    series: getField(row, "Series").toString().trim() || null,
+    seriesNum,
+    genre: getField(row, "Genre").toString().trim() || null,
+    status,
+    pages,
+    audioHours,
+    rating,
+    dateStarted: started.date,
+    yearStarted: started.year,
+    monthStarted: started.month,
+    dateCompleted: completed.date,
+    yearCompleted: completed.year,
+    monthCompleted: completed.month,
+    quote: getField(row, "Quote").toString().trim() || null,
+    format: null,
+    dateAdded: todayISO(),
+    priority,
+  };
 }
 
 function monthName(m){
@@ -441,6 +545,8 @@ function ReadingLedger({ uid, email, onSignOut }) {
   const [seriesLookupError, setSeriesLookupError] = useState("");
   const [libGroupBy, setLibGroupBy] = useState("year");
   const [libSort, setLibSort] = useState("finish");
+  const [importStatus, setImportStatus] = useState(null);
+  const importFileRef = useRef(null);
   const [expandedYears, setExpandedYears] = useState(() => new Set());
   const [expandedStatsYears, setExpandedStatsYears] = useState(() => new Set());
   const [editingBook, setEditingBook] = useState(null);
@@ -595,6 +701,55 @@ function ReadingLedger({ uid, email, onSignOut }) {
   function persistBooks(newList) {
     setBooks(newList);
     if (booksRef) booksRef.set({ list: newList, dataVersion: DATA_VERSION }).catch(e => console.error("save books failed", e));
+  }
+
+  function exportCSV() {
+    const rows = books.map(bookToRow);
+    const csv = Papa.unparse({ fields: CSV_COLUMNS, data: rows });
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `reading-ledger-export-${todayISO()}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function importCSV(file) {
+    setImportStatus({ state: "loading", message: "Reading fileâ€¦" });
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const parsed = Papa.parse(e.target.result, { header: true, skipEmptyLines: true });
+        if (parsed.errors && parsed.errors.length > 0) {
+          setImportStatus({ state: "error", message: "Couldn't parse that file â€” make sure it's a CSV with a header row." });
+          return;
+        }
+        let nextId = Math.max(0, ...books.map(b => b.id)) + 1;
+        let nextPriority = Math.max(0, ...books.map(b => b.priority ?? 0)) + 1;
+        const newBooks = [];
+        parsed.data.forEach(row => {
+          const book = rowToBook(row, nextId, nextPriority);
+          if (book) {
+            newBooks.push(book);
+            nextId += 1;
+            nextPriority += 1;
+          }
+        });
+        if (newBooks.length === 0) {
+          setImportStatus({ state: "error", message: "No valid rows found â€” each row needs at least a Title." });
+          return;
+        }
+        persistBooks([...books, ...newBooks]);
+        setImportStatus({ state: "success", message: `Added ${newBooks.length} book${newBooks.length !== 1 ? "s" : ""} to your library.` });
+      } catch (err) {
+        setImportStatus({ state: "error", message: "Something went wrong reading that file." });
+      }
+    };
+    reader.onerror = () => setImportStatus({ state: "error", message: "Couldn't read that file." });
+    reader.readAsText(file);
   }
 
   function persistGoals(newGoals) {
@@ -1321,6 +1476,32 @@ function ReadingLedger({ uid, email, onSignOut }) {
                 <ViewModeToggle mode={libViewMode} onChange={setLibViewMode} />
               </div>
             </div>
+
+            <div style={styles.importExportRow}>
+              <button style={styles.addBtn} onClick={exportCSV}>
+                <Download size={14} /> Export to CSV
+              </button>
+              <button style={styles.addBtn} onClick={() => importFileRef.current && importFileRef.current.click()}>
+                <Upload size={14} /> Import from CSV
+              </button>
+              <input
+                ref={importFileRef}
+                type="file"
+                accept=".csv,text/csv"
+                style={{ display: "none" }}
+                onChange={e => {
+                  const file = e.target.files && e.target.files[0];
+                  if (file) importCSV(file);
+                  e.target.value = "";
+                }}
+              />
+            </div>
+            {importStatus && (
+              <div style={importStatus.state === "error" ? styles.lookupError : styles.lookupSuccess}>
+                {importStatus.message}
+              </div>
+            )}
+
             {libraryGroups.map(([groupKey, list]) => {
               const expanded = expandedYears.has(groupKey) || libSearch.trim() !== "" || libStatusFilter !== "All";
               return (
@@ -2390,6 +2571,12 @@ const styles = {
     flexWrap: "wrap",
     marginBottom: 14,
     alignItems: "center",
+  },
+  importExportRow: {
+    display: "flex",
+    gap: 8,
+    flexWrap: "wrap",
+    marginBottom: 10,
   },
   filterRow: {
     display: "flex",
