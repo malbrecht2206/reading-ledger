@@ -114,6 +114,8 @@ function sortBooksWithin(list, mode) {
     arr.sort((a, b) => (a.author || "").localeCompare(b.author || ""));
   } else if (mode === "pages") {
     arr.sort((a, b) => (a.pages ?? Infinity) - (b.pages ?? Infinity));
+  } else if (mode === "rating") {
+    arr.sort((a, b) => (b.rating || 0) - (a.rating || 0));
   } else {
     arr.sort((a, b) => finishSortKey(b).localeCompare(finishSortKey(a)));
   }
@@ -150,6 +152,28 @@ function GenreTag({ genre }) {
     <span style={{ ...styles.genreTag, borderColor: color, color }}>
       {genre}
     </span>
+  );
+}
+
+function StarRating({ value, onChange, size = 15, readOnly = false }) {
+  const stars = [1, 2, 3, 4, 5];
+  return (
+    <div style={{ display: "flex", gap: 2 }} onClick={e => readOnly && e.stopPropagation()}>
+      {stars.map(n => (
+        <span
+          key={n}
+          onClick={readOnly ? undefined : (e) => { e.stopPropagation(); onChange(n === value ? null : n); }}
+          style={{
+            cursor: readOnly ? "default" : "pointer",
+            color: n <= (value || 0) ? "#B8874A" : "rgba(122,107,76,0.3)",
+            fontSize: size,
+            lineHeight: 1,
+          }}
+        >
+          ★
+        </span>
+      ))}
+    </div>
   );
 }
 
@@ -237,10 +261,15 @@ function BookCard({ book, onStatusChange, onDelete, reorder, rank, onMoveUp, onM
         </div>
       </div>
 
+      {book.status === "Read" && (
+        <div style={styles.cardRatingRow}>
+          <StarRating value={book.rating} readOnly size={13} onChange={() => {}} />
+        </div>
+      )}
+
       {book.quote && (
         <div onClick={e => e.stopPropagation()}>
-          <button style={styles.quoteToggle} onClick={() => setShowQuote(s => !s)}>
-            <Quote size={12} /> {showQuote ? "hide quote" : "show quote"}
+          <button style={styles.quoteToggle} onClick={() => setShowQuote(s => !s)}>            <Quote size={12} /> {showQuote ? "hide quote" : "show quote"}
           </button>
           {showQuote && <div style={styles.quoteBlock}>{book.quote}</div>}
         </div>
@@ -288,7 +317,10 @@ function BookListRow({ book, onStatusChange, onDelete, onOpenEdit, reorder, rank
       <div style={styles.listMain}>
         <div style={styles.listTitleLine}>
           <span style={styles.listTitle}>{book.title}</span>
-          <StatusStamp status={book.status} />
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {book.status === "Read" && book.rating ? <StarRating value={book.rating} readOnly size={11} onChange={() => {}} /> : null}
+            <StatusStamp status={book.status} />
+          </div>
         </div>
         <div style={styles.listSubLine}>
           {book.author || "Unknown author"}
@@ -556,7 +588,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
       .map(b => ({
         title: b.title, author: b.author, series: b.series, seriesNum: b.seriesNum,
         genre: b.genre, pages: b.pages, audioHours: b.audioHours,
-        yearCompleted: b.yearCompleted, monthCompleted: b.monthCompleted,
+        yearCompleted: b.yearCompleted, monthCompleted: b.monthCompleted, rating: b.rating || null,
       }))
       .sort((a, b) => (b.yearCompleted || 0) - (a.yearCompleted || 0) || (b.monthCompleted || 0) - (a.monthCompleted || 0));
     publicSummaryRef.set({
@@ -771,6 +803,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
         status: editingBook.status || "TBR",
         dateStarted: editingBook.dateStarted || "",
         dateCompleted: editingBook.dateCompleted || "",
+        rating: editingBook.rating || null,
       });
       setEditLookupLoading(false);
       setEditLookupError("");
@@ -796,6 +829,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
         status: editDraft.status,
         dateStarted: editDraft.dateStarted || null,
         dateCompleted: editDraft.dateCompleted || null,
+        rating: editDraft.rating || null,
       };
       if (editDraft.dateStarted) updated.yearStarted = new Date(editDraft.dateStarted).getFullYear();
       if (editDraft.dateCompleted) {
@@ -1160,6 +1194,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
                   <option value="title">Sort within group: Title</option>
                   <option value="author">Sort within group: Author</option>
                   <option value="pages">Sort within group: Pages</option>
+                  <option value="rating">Sort within group: Rating</option>
                 </select>
                 <ViewModeToggle mode={libViewMode} onChange={setLibViewMode} />
               </div>
@@ -1647,6 +1682,23 @@ function ReadingLedger({ uid, email, onSignOut }) {
               </div>
             </div>
 
+            {editDraft.status === "Read" && (
+              <div>
+                <label style={styles.label}>Your rating</label>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <StarRating value={editDraft.rating} size={22} onChange={n => setEditDraft({ ...editDraft, rating: n })} />
+                  {editDraft.rating ? (
+                    <button
+                      style={{ background: "none", border: "none", color: "#8B8676", fontSize: 11, cursor: "pointer", textDecoration: "underline" }}
+                      onClick={() => setEditDraft({ ...editDraft, rating: null })}
+                    >
+                      clear
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            )}
+
             <button style={styles.saveBtn} onClick={saveEdit}>Save changes</button>
             <button
               style={styles.deleteEntryBtn}
@@ -2068,6 +2120,9 @@ const styles = {
   },
   cardDatesSlot: {
     marginTop: 1,
+  },
+  cardRatingRow: {
+    marginTop: 3,
   },
   cardCompleted: {
     fontSize: 9.5,
