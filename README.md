@@ -6,11 +6,18 @@ There's no build step. It's plain HTML + a React component transformed in the br
 
 ## Files
 
-- `index.html` — the page shell; loads React, Babel, and Firebase from CDNs, then fetches and transforms `app.jsx`
+- `index.html` — the page shell; loads React, Babel, Firebase, and PapaParse (CSV import/export) from CDNs, then fetches and transforms `app.jsx`
 - `firebase-config.js` — your Firebase project's public config + `firebase.initializeApp(...)`
-- `app.jsx` — the entire app (UI, Firestore data layer, auth, friends)
+- `app.jsx` — the entire app (UI, Firestore data layer, auth, friends, CSV import/export)
 - `firestore.rules` — a copy of the security rules for reference (the live rules are set in the Firebase console — **republish these any time this file changes**)
 - `favicon.ico`, `icon-16.png`, `icon-32.png`, `icon-180.png`, `icon-192.png`, `icon-512.png`, `manifest.json` — browser tab icon + "Add to Home Screen" icon/behavior
+
+## Importing and exporting your library
+
+On the **Library** tab:
+- **Export to CSV** downloads your entire library (every status — TBR, reading, read, DNF) as a spreadsheet you can open in Excel, Numbers, or Google Sheets.
+- **Import from CSV** reads a spreadsheet and *adds* those books to your library (it never replaces or removes anything). Expected columns: `Title, Author, Series, Series #, Genre, Status, Pages, Audio Hours, Rating, Date Started, Date Completed, Quote` — only `Title` is required, and column names are matched case-insensitively with a little flexibility (e.g. "Audio Duration" or "Finished" are recognized too). Dates can be a full `YYYY-MM-DD`, or just `YYYY-MM` or `YYYY` if that's all you know.
+- Importing the same file twice will create duplicate entries — the app doesn't try to detect or merge duplicates automatically (the Series tab does collapse same-titled books for progress purposes, but the Library list itself won't).
 
 ## One-time setup
 
