@@ -569,6 +569,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
   const [libGroupBy, setLibGroupBy] = useState("year");
   const [libSort, setLibSort] = useState("finish");
   const [importStatus, setImportStatus] = useState(null);
+  const [importMode, setImportMode] = useState("skipDuplicates");
   const [newGoalYear, setNewGoalYear] = useState("");
   const importFileRef = useRef(null);
   const [expandedYears, setExpandedYears] = useState(() => new Set());
@@ -741,7 +742,11 @@ function ReadingLedger({ uid, email, onSignOut }) {
     URL.revokeObjectURL(url);
   }
 
-  function importCSV(file) {
+  function bookDedupeKey(title, author) {
+    return `${(title || "").trim().toLowerCase()}|${(author || "").trim().toLowerCase()}`;
+  }
+
+  function importCSV(file, mode) {
     setImportStatus({ state: "loading", message: "Reading file\u2026" });
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -751,8 +756,19 @@ function ReadingLedger({ uid, email, onSignOut }) {
           setImportStatus({ state: "error", message: "Couldn't parse that file \u2014 make sure it's a CSV with a header row." });
           return;
         }
-        let nextId = Math.max(0, ...books.map(b => b.id)) + 1;
-        let nextPriority = Math.max(0, ...books.map(b => b.priority ?? 0)) + 1;
+
+        if (mode === "replace") {
+          const confirmed = window.confirm(
+            `This deletes your entire current library (${books.length} book${books.length !== 1 ? "s" : ""}) and replaces it with what's in this file. This can't be undone. Continue?`
+          );
+          if (!confirmed) {
+            setImportStatus(null);
+            return;
+          }
+        }
+
+        let nextId = 1;
+        let nextPriority = 0;
         const newBooks = [];
         parsed.data.forEach(row => {
           const book = rowToBook(row, nextId, nextPriority);
@@ -762,10 +778,47 @@ function ReadingLedger({ uid, email, onSignOut }) {
             nextPriority += 1;
           }
         });
+
         if (newBooks.length === 0) {
           setImportStatus({ state: "error", message: "No valid rows found \u2014 each row needs at least a Title." });
           return;
         }
+
+        if (mode === "replace") {
+          persistBooks(newBooks);
+          setImportStatus({ state: "success", message: `Replaced your library with ${newBooks.length} book${newBooks.length !== 1 ? "s" : ""} from the file.` });
+          return;
+        }
+
+        if (mode === "skipDuplicates") {
+          const existingKeys = new Set(books.map(b => bookDedupeKey(b.title, b.author)));
+          const seenInFile = new Set();
+          const toAdd = [];
+          let skipped = 0;
+          newBooks.forEach(b => {
+            const key = bookDedupeKey(b.title, b.author);
+            if (existingKeys.has(key) || seenInFile.has(key)) {
+              skipped += 1;
+            } else {
+              seenInFile.add(key);
+              toAdd.push(b);
+            }
+          });
+          let idCounter = Math.max(0, ...books.map(b => b.id)) + 1;
+          let priorityCounter = Math.max(0, ...books.map(b => b.priority ?? 0)) + 1;
+          toAdd.forEach(b => { b.id = idCounter++; b.priority = priorityCounter++; });
+          persistBooks([...books, ...toAdd]);
+          setImportStatus({
+            state: "success",
+            message: `Added ${toAdd.length} new book${toAdd.length !== 1 ? "s" : ""}${skipped > 0 ? ` (skipped ${skipped} already in your library)` : ""}.`,
+          });
+          return;
+        }
+
+        // mode === "append": add everything, duplicates and all
+        let idCounter = Math.max(0, ...books.map(b => b.id)) + 1;
+        let priorityCounter = Math.max(0, ...books.map(b => b.priority ?? 0)) + 1;
+        newBooks.forEach(b => { b.id = idCounter++; b.priority = priorityCounter++; });
         persistBooks([...books, ...newBooks]);
         setImportStatus({ state: "success", message: `Added ${newBooks.length} book${newBooks.length !== 1 ? "s" : ""} to your library.` });
       } catch (err) {
@@ -1292,7 +1345,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
     return (
       <div style={styles.loadingScreen}>
         <Loader2 className="spin" size={28} />
-        <div style={{ marginTop: 12, fontFamily: "'JetBrains Mono', monospace", fontSize: 13, letterSpacing: 1 }}>OPENING THE CATALOG\u2026</div>
+        <div style={{ marginTop: 12, fontFamily: "'JetBrains Mono', monospace", fontSize: 13, letterSpacing: 1 }}>{"OPENING THE CATALOG\u2026"}</div>
       </div>
     );
   }
@@ -1410,7 +1463,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
             <div style={styles.toolbar}>
               <div style={styles.searchWrap}>
                 <Search size={14} color="#8B8676" />
-                <input style={styles.searchInput} placeholder="Search title, author, series\u2026" value={tbrSearch} onChange={e => setTbrSearch(e.target.value)} />
+                <input style={styles.searchInput} placeholder={"Search title, author, series\u2026"} value={tbrSearch} onChange={e => setTbrSearch(e.target.value)} />
               </div>
               <div style={styles.filterRowPair}>
                 <select className="selectHalf" style={styles.selectHalf} value={tbrGenre} onChange={e => setTbrGenre(e.target.value)}>
@@ -1483,7 +1536,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
             <div style={styles.toolbar}>
               <div style={styles.searchWrap}>
                 <Search size={14} color="#8B8676" />
-                <input style={styles.searchInput} placeholder="Search your library\u2026" value={libSearch} onChange={e => setLibSearch(e.target.value)} />
+                <input style={styles.searchInput} placeholder={"Search your library\u2026"} value={libSearch} onChange={e => setLibSearch(e.target.value)} />
               </div>
               <div style={styles.filterRow}>
                 <select style={styles.select} value={libStatusFilter} onChange={e => setLibStatusFilter(e.target.value)}>
@@ -1511,6 +1564,11 @@ function ReadingLedger({ uid, email, onSignOut }) {
               <button style={styles.addBtn} onClick={exportCSV}>
                 <Download size={14} /> Export to CSV
               </button>
+              <select style={styles.select} value={importMode} onChange={e => setImportMode(e.target.value)}>
+                <option value="skipDuplicates">Import: skip books already in library</option>
+                <option value="append">Import: add all rows (even duplicates)</option>
+                <option value="replace">Import: replace entire library</option>
+              </select>
               <button style={styles.addBtn} onClick={() => importFileRef.current && importFileRef.current.click()}>
                 <Upload size={14} /> Import from CSV
               </button>
@@ -1521,7 +1579,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
                 style={{ display: "none" }}
                 onChange={e => {
                   const file = e.target.files && e.target.files[0];
-                  if (file) importCSV(file);
+                  if (file) importCSV(file, importMode);
                   e.target.value = "";
                 }}
               />
@@ -1564,7 +1622,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
             <div style={styles.toolbar}>
               <div style={styles.searchWrap}>
                 <Search size={14} color="#8B8676" />
-                <input style={styles.searchInput} placeholder="Search series or author\u2026" value={seriesSearch} onChange={e => setSeriesSearch(e.target.value)} />
+                <input style={styles.searchInput} placeholder={"Search series or author\u2026"} value={seriesSearch} onChange={e => setSeriesSearch(e.target.value)} />
               </div>
               <select style={styles.select} value={seriesStatusFilter} onChange={e => setSeriesStatusFilter(e.target.value)}>
                 <option value="All">All statuses</option>
@@ -1891,7 +1949,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
                 </button>
               </div>
               <div style={{ fontSize: 11.5, color: "#8B8676", marginTop: 6 }}>
-                Share this code with a friend so they can add you. Adding each other is mutual \u2014 you'll both see each other's currently-reading, finished books, and yearly stats. Your to-be-read list and quotes stay private.
+                {"Share this code with a friend so they can add you. Adding each other is mutual \u2014 you'll both see each other's currently-reading, finished books, and yearly stats. Your to-be-read list and quotes stay private."}
               </div>
             </div>
 
@@ -1962,7 +2020,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
                     const g = Number((friendSummary.goals || {})[new Date().getFullYear()]) || 0;
                     return (
                       <div style={{ fontSize: 12.5, color: "#8B8676" }}>
-                        {s.read} book{s.read !== 1 ? "s" : ""} finished{g ? ` (goal: ${g})` : ""} \u00b7 {Math.round(s.pages).toLocaleString()} pages \u00b7 {s.audio.toFixed(1)} audio hrs
+                        {s.read} book{s.read !== 1 ? "s" : ""} finished{g ? ` (goal: ${g})` : ""}{" \u00b7 "}{Math.round(s.pages).toLocaleString()} pages{" \u00b7 "}{s.audio.toFixed(1)} audio hrs
                       </div>
                     );
                   })()}
@@ -1997,7 +2055,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
             <input style={styles.input} value={newBook.title} onChange={e => setNewBook({ ...newBook, title: e.target.value })} placeholder="e.g. The Name of the Wind" />
 
             <label style={styles.label}>Author</label>
-            <input style={styles.input} value={newBook.author} onChange={e => setNewBook({ ...newBook, author: e.target.value })} placeholder="optional \u2014 lookup can fill this in" />
+            <input style={styles.input} value={newBook.author} onChange={e => setNewBook({ ...newBook, author: e.target.value })} placeholder={"optional \u2014 lookup can fill this in"} />
 
             <button style={styles.lookupBtn} onClick={lookupDetails} disabled={lookupLoading}>
               {lookupLoading ? <Loader2 size={14} className="spin" /> : <Search size={14} />}
@@ -2107,7 +2165,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
 
             {editDraft.status === "Read" && (
               <div>
-                <label style={styles.label}>Your rating (tap a star \u2014 left/right side picks the quarter)</label>
+                <label style={styles.label}>{"Your rating (tap a star \u2014 left/right side picks the quarter)"}</label>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <StarRating value={editDraft.rating} size={22} onChange={n => setEditDraft({ ...editDraft, rating: n })} />
                   <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "#8B8676", minWidth: 34 }}>
