@@ -978,6 +978,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
           .statGrid { grid-template-columns: repeat(2, 1fr) !important; }
           .tabRow { gap: 4px !important; }
           .tabBtn { padding: 6px 8px !important; font-size: 11px !important; gap: 4px !important; }
+          .selectHalf { font-size: 11px !important; padding: 6px 4px !important; }
         }
       `}</style>
 
@@ -1070,12 +1071,12 @@ function ReadingLedger({ uid, email, onSignOut }) {
                 <Search size={14} color="#8B8676" />
                 <input style={styles.searchInput} placeholder="Search title, author, series…" value={tbrSearch} onChange={e => setTbrSearch(e.target.value)} />
               </div>
-              <div style={styles.filterRow}>
-                <select style={styles.select} value={tbrGenre} onChange={e => setTbrGenre(e.target.value)}>
+              <div style={styles.filterRowPair}>
+                <select className="selectHalf" style={styles.selectHalf} value={tbrGenre} onChange={e => setTbrGenre(e.target.value)}>
                   <option>All</option>
                   {genres.map(g => <option key={g}>{g}</option>)}
                 </select>
-                <select style={styles.select} value={tbrSort} onChange={e => setTbrSort(e.target.value)}>
+                <select className="selectHalf" style={styles.selectHalf} value={tbrSort} onChange={e => setTbrSort(e.target.value)}>
                   <option value="priority">Sort: What to read next</option>
                   <option value="continuing">Sort: Continuing a series</option>
                   <option value="pages">Sort: Shortest first</option>
@@ -1084,9 +1085,11 @@ function ReadingLedger({ uid, email, onSignOut }) {
                   <option value="author">Sort: Author</option>
                   <option value="series">Sort: Series</option>
                 </select>
-                <ViewModeToggle mode={tbrViewMode} onChange={setTbrViewMode} />
               </div>
-              <button style={styles.addBtn} onClick={() => setShowAdd(true)}><Plus size={14} /> Add a book</button>
+              <div style={styles.filterRow}>
+                <ViewModeToggle mode={tbrViewMode} onChange={setTbrViewMode} />
+                <button style={styles.addBtn} onClick={() => setShowAdd(true)}><Plus size={14} /> Add a book</button>
+              </div>
             </div>
             <div style={styles.countLine}>
               {tbrBooks.length} book{tbrBooks.length !== 1 ? "s" : ""} on the shelf
@@ -1398,7 +1401,9 @@ function ReadingLedger({ uid, email, onSignOut }) {
                     placeholder="0"
                   />
                   <span style={styles.goalSuffix}>books</span>
-                  <span style={styles.goalActual}>{(yearStats[y] || { read: 0 }).read} read so far</span>
+                  <span style={styles.goalActual}>
+                    {(yearStats[y] || { read: 0 }).read} read{y === currentYear ? " so far" : ""}
+                  </span>
                 </div>
               ))}
               <button
@@ -1929,11 +1934,11 @@ const styles = {
     background: "#EFE7D2",
     color: "#2A2118",
     borderRadius: 3,
-    padding: "14px 14px 12px",
+    padding: "10px 12px 9px",
     boxShadow: "0 3px 10px rgba(0,0,0,0.25)",
     display: "flex",
     flexDirection: "column",
-    gap: 4,
+    gap: 2,
     position: "relative",
     cursor: "pointer",
     height: "100%",
@@ -1942,7 +1947,7 @@ const styles = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 2,
+    marginBottom: 1,
   },
   reorderRow: {
     display: "flex",
@@ -2011,28 +2016,28 @@ const styles = {
   cardTitle: {
     fontFamily: "'Fraunces', serif",
     fontWeight: 600,
-    fontSize: 16.5,
-    lineHeight: 1.25,
+    fontSize: 14.5,
+    lineHeight: 1.2,
     color: "#231B12",
-    minHeight: "2.5em",
+    minHeight: "2.2em",
     display: "-webkit-box",
     WebkitLineClamp: 2,
     WebkitBoxOrient: "vertical",
     overflow: "hidden",
   },
   cardAuthor: {
-    fontSize: 12.5,
+    fontSize: 11.5,
     fontStyle: "italic",
     color: "#5A4E38",
-    minHeight: "1.3em",
+    minHeight: "1.25em",
     whiteSpace: "nowrap",
     overflow: "hidden",
     textOverflow: "ellipsis",
   },
   cardSeries: {
-    fontSize: 11.5,
+    fontSize: 10.5,
     color: "#7A6B4C",
-    minHeight: "1.3em",
+    minHeight: "1.25em",
     whiteSpace: "nowrap",
     overflow: "hidden",
     textOverflow: "ellipsis",
@@ -2040,40 +2045,40 @@ const styles = {
   cardMetaRow: {
     display: "flex",
     alignItems: "center",
-    gap: 6,
+    gap: 5,
     flexWrap: "wrap",
-    marginTop: 4,
-    minHeight: 22,
+    marginTop: 2,
+    minHeight: 18,
   },
   metaItem: {
     fontFamily: "'JetBrains Mono', monospace",
-    fontSize: 10.5,
+    fontSize: 9.5,
     color: "#5A4E38",
     background: "rgba(42,33,24,0.06)",
-    padding: "2px 6px",
+    padding: "1px 5px",
     borderRadius: 2,
   },
   genreTag: {
     fontFamily: "'JetBrains Mono', monospace",
-    fontSize: 10,
-    padding: "2px 6px",
+    fontSize: 9,
+    padding: "1px 5px",
     borderRadius: 2,
     border: "1px solid",
     background: "rgba(255,255,255,0.4)",
   },
   cardDatesSlot: {
-    marginTop: 2,
+    marginTop: 1,
   },
   cardCompleted: {
-    fontSize: 10.5,
+    fontSize: 9.5,
     color: "#6E7F52",
     fontFamily: "'JetBrains Mono', monospace",
-    marginTop: 2,
-    minHeight: "1.3em",
+    marginTop: 1,
+    minHeight: "1.25em",
   },
   cardBottomBlock: {
     marginTop: "auto",
-    paddingTop: 8,
+    paddingTop: 6,
   },
   cardStatusRow: {
     display: "flex",
@@ -2102,32 +2107,32 @@ const styles = {
   },
   cardActions: {
     display: "flex",
-    gap: 6,
-    marginTop: 8,
+    gap: 5,
+    marginTop: 6,
     flexWrap: "wrap",
   },
   actionBtn: {
     display: "flex",
     alignItems: "center",
-    gap: 4,
-    fontSize: 11,
+    gap: 3,
+    fontSize: 10,
     background: "#2A2118",
     color: "#EFE7D2",
     border: "none",
     borderRadius: 2,
-    padding: "5px 8px",
+    padding: "4px 7px",
     cursor: "pointer",
   },
   actionBtnMuted: {
     display: "flex",
     alignItems: "center",
-    gap: 4,
-    fontSize: 11,
+    gap: 3,
+    fontSize: 10,
     background: "transparent",
     color: "#A13D2D",
     border: "1px solid #A13D2D",
     borderRadius: 2,
-    padding: "5px 8px",
+    padding: "4px 7px",
     cursor: "pointer",
   },
   deleteBtn: {
@@ -2136,7 +2141,7 @@ const styles = {
     border: "none",
     color: "#8A7A5C",
     cursor: "pointer",
-    padding: "5px 6px",
+    padding: "4px 5px",
   },
   toolbar: {
     display: "flex",
@@ -2150,6 +2155,12 @@ const styles = {
     gap: 8,
     flexWrap: "wrap",
     alignItems: "center",
+  },
+  filterRowPair: {
+    display: "flex",
+    gap: 8,
+    flexWrap: "nowrap",
+    width: "100%",
   },
   searchWrap: {
     display: "flex",
@@ -2175,6 +2186,16 @@ const styles = {
     borderRadius: 3,
     padding: "7px 8px",
     fontSize: 12.5,
+  },
+  selectHalf: {
+    background: "rgba(239,231,210,0.05)",
+    border: "1px solid rgba(201,194,172,0.18)",
+    color: "#C9C2AC",
+    borderRadius: 3,
+    padding: "7px 6px",
+    fontSize: 12.5,
+    flex: "1 1 0",
+    minWidth: 0,
   },
   addBtn: {
     display: "flex",
