@@ -1385,13 +1385,34 @@ function ReadingLedger({ uid, email, onSignOut }) {
                   <span style={styles.seriesProgressLabel}>{s.readCount} / {s.totalBooks}</span>
                 </div>
 
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
+                  <label style={{ ...styles.label, marginTop: 0 }}>Total books in series</label>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <input
+                    type="number"
+                    min="1"
+                    style={{ ...styles.input, width: 80 }}
+                    value={s.totalBooks}
+                    onChange={e => updateSeriesOverride(s.name, { totalBooks: e.target.value ? Number(e.target.value) : null })}
+                  />
+                  {s.totalBooksOverridden && (
+                    <button
+                      style={{ background: "none", border: "none", color: "#8B8676", fontSize: 11, cursor: "pointer", textDecoration: "underline" }}
+                      onClick={() => updateSeriesOverride(s.name, { totalBooks: null })}
+                    >
+                      reset to default
+                    </button>
+                  )}
+                </div>
+
                 <button style={styles.lookupBtn} onClick={() => lookupSeriesTotal(s)} disabled={seriesLookupLoading}>
                   {seriesLookupLoading ? <Loader2 size={14} className="spin" /> : <Search size={14} />}
                   {seriesLookupLoading ? "Checking Open Library…" : "Look up total books in series"}
                 </button>
                 {seriesLookupError && <div style={styles.lookupError}>{seriesLookupError}</div>}
                 {s.totalBooksOverridden && !seriesLookupError && (
-                  <div style={styles.lookupSuccess}>Total book count updated from web search.</div>
+                  <div style={styles.lookupSuccess}>Open Library's count is a rough estimate — double check it, or type the real number above.</div>
                 )}
 
                 <button
@@ -1402,21 +1423,58 @@ function ReadingLedger({ uid, email, onSignOut }) {
                 </button>
 
                 <div style={{ marginTop: 18, borderTop: "1px dashed rgba(201,194,172,0.2)", paddingTop: 12 }}>
-                  {s.books.map(b => (
-                    <div key={b.id} style={styles.seriesBookRow}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={styles.seriesBookTitle}>
-                          {b.seriesNum ? `${b.seriesNum}. ` : ""}{b.title}
-                        </div>
-                        <StatusStamp status={b.status} />
-                      </div>
-                      {b.status !== "DNF" && (
-                        <button style={styles.actionBtnMuted} onClick={() => updateStatus(b.id, "DNF")}>
-                          <BookX size={13} /> DNF
-                        </button>
-                      )}
-                    </div>
-                  ))}
+                  {(() => {
+                    const notFinished = s.books.filter(b => b.status !== "Read");
+                    const finished = s.books.filter(b => b.status === "Read");
+                    const gap = s.totalBooks - s.books.length;
+                    return (
+                      <>
+                        {notFinished.length > 0 && (
+                          <div style={{ marginBottom: 14 }}>
+                            <div style={{ ...styles.sectionTitle, fontSize: 14, marginBottom: 6 }}>Still to read</div>
+                            {notFinished.map(b => (
+                              <div key={b.id} style={styles.seriesBookRow}>
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  <div style={styles.seriesBookTitle}>
+                                    {b.seriesNum ? `${b.seriesNum}. ` : ""}{b.title}
+                                  </div>
+                                  <StatusStamp status={b.status} />
+                                </div>
+                                {b.status !== "DNF" && (
+                                  <button style={styles.actionBtnMuted} onClick={() => updateStatus(b.id, "DNF")}>
+                                    <BookX size={13} /> DNF
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {gap > 0 && (
+                          <div style={{ fontSize: 11.5, color: "#8B8676", fontStyle: "italic", marginBottom: 14 }}>
+                            {gap} more book{gap !== 1 ? "s" : ""} in this series {gap !== 1 ? "aren't" : "isn't"} in your library yet.
+                          </div>
+                        )}
+                        {finished.length > 0 && (
+                          <div>
+                            <div style={{ ...styles.sectionTitle, fontSize: 14, marginBottom: 6 }}>Finished</div>
+                            {finished.map(b => (
+                              <div key={b.id} style={styles.seriesBookRow}>
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  <div style={styles.seriesBookTitle}>
+                                    {b.seriesNum ? `${b.seriesNum}. ` : ""}{b.title}
+                                  </div>
+                                  <StatusStamp status={b.status} />
+                                </div>
+                                <button style={styles.actionBtnMuted} onClick={() => updateStatus(b.id, "DNF")}>
+                                  <BookX size={13} /> DNF
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
             </div>
