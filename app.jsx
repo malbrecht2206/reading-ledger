@@ -210,7 +210,7 @@ function StatusStamp({ status }) {
   );
 }
 
-function BookCard({ book, onStatusChange, onDelete, reorder, rank, onMoveUp, onMoveDown, canMoveUp, canMoveDown, onSetRank, onOpenEdit }) {
+function BookCard({ book, onStatusChange, onDelete, reorder, rank, onMoveUp, onMoveDown, canMoveUp, canMoveDown, onSetRank, onOpenEdit, onReread }) {
   const [showQuote, setShowQuote] = useState(false);
   const [editingRank, setEditingRank] = useState(false);
   const [rankDraft, setRankDraft] = useState(rank);
@@ -305,6 +305,11 @@ function BookCard({ book, onStatusChange, onDelete, reorder, rank, onMoveUp, onM
               <CheckCircle2 size={13} /> Mark read
             </button>
           )}
+          {book.status === "Read" && onReread && (
+            <button style={styles.actionBtn} onClick={() => onReread(book)}>
+              <Play size={13} /> Re-read
+            </button>
+          )}
           {book.status !== "DNF" && (
             <button style={styles.actionBtnMuted} onClick={() => onStatusChange(book.id, "DNF")}>
               <BookX size={13} /> DNF
@@ -319,7 +324,7 @@ function BookCard({ book, onStatusChange, onDelete, reorder, rank, onMoveUp, onM
   );
 }
 
-function BookListRow({ book, onStatusChange, onDelete, onOpenEdit, reorder, rank, onMoveUp, onMoveDown, canMoveUp, canMoveDown }) {
+function BookListRow({ book, onStatusChange, onDelete, onOpenEdit, reorder, rank, onMoveUp, onMoveDown, canMoveUp, canMoveDown, onReread }) {
   const audio = fmtHours(book.audioHours);
   return (
     <div style={styles.listRow} onClick={() => onOpenEdit && onOpenEdit(book)}>
@@ -354,6 +359,9 @@ function BookListRow({ book, onStatusChange, onDelete, onOpenEdit, reorder, rank
         )}
         {book.status !== "Read" && (
           <button style={styles.actionBtn} onClick={() => onStatusChange(book.id, "Read")}><CheckCircle2 size={13} /></button>
+        )}
+        {book.status === "Read" && onReread && (
+          <button style={styles.actionBtn} onClick={() => onReread(book)} title="Re-read"><Play size={13} /></button>
         )}
         {book.status !== "DNF" && (
           <button style={styles.actionBtnMuted} onClick={() => onStatusChange(book.id, "DNF")}><BookX size={13} /></button>
@@ -651,7 +659,24 @@ function ReadingLedger({ uid, email, onSignOut }) {
     const metaMap = {};
     SEED_SERIES_META.forEach(m => { metaMap[m.series] = m; });
 
-    const rows = Object.entries(bySeries).map(([name, list]) => {
+    // If the same title shows up more than once in a series (e.g. a re-read logged
+    // as a separate entry), collapse it to a single representative, preferring
+    // whichever copy reflects the most "advanced" status.
+    const STATUS_PRIORITY = { "Read": 0, "In Progress": 1, "DNF": 2, "TBR": 3 };
+    function dedupeByTitle(rawList) {
+      const byTitle = new Map();
+      rawList.forEach(b => {
+        const key = (b.title || "").trim().toLowerCase();
+        const existing = byTitle.get(key);
+        if (!existing || (STATUS_PRIORITY[b.status] ?? 9) < (STATUS_PRIORITY[existing.status] ?? 9)) {
+          byTitle.set(key, b);
+        }
+      });
+      return Array.from(byTitle.values());
+    }
+
+    const rows = Object.entries(bySeries).map(([name, rawList]) => {
+      const list = dedupeByTitle(rawList);
       const meta = metaMap[name];
       const override = seriesOverrides[name] || {};
       const sortedList = list.slice().sort((a, b) => (a.seriesNum ?? 999) - (b.seriesNum ?? 999));
@@ -891,6 +916,32 @@ function ReadingLedger({ uid, email, onSignOut }) {
     setShowAdd(false);
   }
 
+  function startReread(original) {
+    const id = Math.max(0, ...books.map(b => b.id)) + 1;
+    const reread = {
+      id,
+      title: original.title,
+      author: original.author,
+      series: original.series,
+      seriesNum: original.seriesNum,
+      genre: original.genre,
+      pages: original.pages,
+      audioHours: original.audioHours,
+      format: original.format,
+      status: "In Progress",
+      dateStarted: todayISO(),
+      yearStarted: currentYear,
+      dateCompleted: null,
+      yearCompleted: null,
+      monthCompleted: null,
+      rating: null,
+      quote: null,
+      dateAdded: todayISO(),
+      priority: Math.max(0, ...books.map(b => b.priority ?? 0)) + 1,
+    };
+    persistBooks([reread, ...books]);
+  }
+
   function parseSeriesString(raw) {
     // Open Library sometimes returns series as "Name #3" or "Name, Book 3" - try to split those out.
     const m = raw.match(/^(.*?)[,]?\s*(?:#|book\s*)(\d+(?:\.\d+)?)\s*$/i);
@@ -1118,7 +1169,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
                 <div style={styles.sectionTitle}>Currently reading</div>
                 <div className="cardGrid" style={styles.cardGrid}>
                   {inProgressBooks.map(b => (
-                    <BookCard key={b.id} book={b} onStatusChange={updateStatus} onDelete={deleteBook} onOpenEdit={setEditingBook} />
+                    <BookCard key={b.id} book={b} onStatusChange={updateStatus} onDelete={deleteBook} onOpenEdit={setEditingBook} onReread={startReread} />
                   ))}
                 </div>
               </div>
@@ -1128,7 +1179,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
               <div style={styles.sectionTitle}>Recently finished</div>
               <div className="cardGrid" style={styles.cardGrid}>
                 {books.filter(b => b.status === "Read").slice().sort((a, b) => (b.yearCompleted || 0) - (a.yearCompleted || 0) || (b.monthCompleted || 0) - (a.monthCompleted || 0)).slice(0, 4).map(b => (
-                  <BookCard key={b.id} book={b} onStatusChange={updateStatus} onDelete={deleteBook} onOpenEdit={setEditingBook} />
+                  <BookCard key={b.id} book={b} onStatusChange={updateStatus} onDelete={deleteBook} onOpenEdit={setEditingBook} onReread={startReread} />
                 ))}
               </div>
             </div>
@@ -1248,11 +1299,11 @@ function ReadingLedger({ uid, email, onSignOut }) {
                   {expanded && (
                     libViewMode === "tile" ? (
                       <div className="cardGrid" style={styles.cardGrid}>
-                        {list.map(b => <BookCard key={b.id} book={b} onStatusChange={updateStatus} onDelete={deleteBook} onOpenEdit={setEditingBook} />)}
+                        {list.map(b => <BookCard key={b.id} book={b} onStatusChange={updateStatus} onDelete={deleteBook} onOpenEdit={setEditingBook} onReread={startReread} />)}
                       </div>
                     ) : (
                       <div style={styles.listView}>
-                        {list.map(b => <BookListRow key={b.id} book={b} onStatusChange={updateStatus} onDelete={deleteBook} onOpenEdit={setEditingBook} />)}
+                        {list.map(b => <BookListRow key={b.id} book={b} onStatusChange={updateStatus} onDelete={deleteBook} onOpenEdit={setEditingBook} onReread={startReread} />)}
                       </div>
                     )
                   )}
