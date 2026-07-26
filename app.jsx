@@ -156,23 +156,42 @@ function GenreTag({ genre }) {
 }
 
 function StarRating({ value, onChange, size = 15, readOnly = false }) {
-  const stars = [1, 2, 3, 4, 5];
+  const v = value || 0;
+
+  function handleClick(e, starIndex) {
+    if (readOnly) return;
+    e.stopPropagation();
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const width = rect.width || size;
+    const quarter = Math.max(1, Math.min(4, Math.ceil((x / width) * 4)));
+    onChange(starIndex + quarter / 4);
+  }
+
   return (
     <div style={{ display: "flex", gap: 2 }} onClick={e => readOnly && e.stopPropagation()}>
-      {stars.map(n => (
-        <span
-          key={n}
-          onClick={readOnly ? undefined : (e) => { e.stopPropagation(); onChange(n === value ? null : n); }}
-          style={{
-            cursor: readOnly ? "default" : "pointer",
-            color: n <= (value || 0) ? "#B8874A" : "rgba(122,107,76,0.3)",
-            fontSize: size,
-            lineHeight: 1,
-          }}
-        >
-          ★
-        </span>
-      ))}
+      {[0, 1, 2, 3, 4].map(i => {
+        const fillPct = Math.max(0, Math.min(1, v - i)) * 100;
+        return (
+          <span
+            key={i}
+            onClick={readOnly ? undefined : (e) => handleClick(e, i)}
+            style={{
+              position: "relative",
+              display: "inline-block",
+              width: size,
+              height: size,
+              fontSize: size,
+              lineHeight: 1,
+              cursor: readOnly ? "default" : "pointer",
+              flexShrink: 0,
+            }}
+          >
+            <span style={{ position: "absolute", top: 0, left: 0, color: "rgba(122,107,76,0.3)" }}>★</span>
+            <span style={{ position: "absolute", top: 0, left: 0, width: `${fillPct}%`, overflow: "hidden", whiteSpace: "nowrap", color: "#B8874A" }}>★</span>
+          </span>
+        );
+      })}
     </div>
   );
 }
@@ -235,7 +254,12 @@ function BookCard({ book, onStatusChange, onDelete, reorder, rank, onMoveUp, onM
       )}
       <div style={styles.cardTopRow}>
         <span style={styles.callNumber}>{callNumber(book)}</span>
-        <StatusStamp status={book.status} />
+        <div style={styles.cardTopRightStack}>
+          <StatusStamp status={book.status} />
+          {book.status === "Read" && book.rating ? (
+            <StarRating value={book.rating} readOnly size={11} onChange={() => {}} />
+          ) : null}
+        </div>
       </div>
       <div style={styles.cardTitle}>{book.title}</div>
       <div style={styles.cardAuthor}>{book.author || "Unknown author"}</div>
@@ -260,12 +284,6 @@ function BookCard({ book, onStatusChange, onDelete, reorder, rank, onMoveUp, onM
             : "\u00A0"}
         </div>
       </div>
-
-      {book.status === "Read" && (
-        <div style={styles.cardRatingRow}>
-          <StarRating value={book.rating} readOnly size={13} onChange={() => {}} />
-        </div>
-      )}
 
       {book.quote && (
         <div onClick={e => e.stopPropagation()}>
@@ -1684,9 +1702,12 @@ function ReadingLedger({ uid, email, onSignOut }) {
 
             {editDraft.status === "Read" && (
               <div>
-                <label style={styles.label}>Your rating</label>
+                <label style={styles.label}>Your rating (tap a star — left/right side picks the quarter)</label>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <StarRating value={editDraft.rating} size={22} onChange={n => setEditDraft({ ...editDraft, rating: n })} />
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "#8B8676", minWidth: 34 }}>
+                    {editDraft.rating ? editDraft.rating.toFixed(2).replace(/\.?0+$/, "") : "—"}
+                  </span>
                   {editDraft.rating ? (
                     <button
                       style={{ background: "none", border: "none", color: "#8B8676", fontSize: 11, cursor: "pointer", textDecoration: "underline" }}
@@ -1998,8 +2019,14 @@ const styles = {
   cardTopRow: {
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
     marginBottom: 1,
+  },
+  cardTopRightStack: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-end",
+    gap: 2,
   },
   reorderRow: {
     display: "flex",
@@ -2120,9 +2147,6 @@ const styles = {
   },
   cardDatesSlot: {
     marginTop: 1,
-  },
-  cardRatingRow: {
-    marginTop: 3,
   },
   cardCompleted: {
     fontSize: 9.5,
