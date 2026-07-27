@@ -115,14 +115,14 @@ const THEMES = {
   elvish: {
     label: "Elvish",
     vars: {
-      "app-bg": "#12160e", "loading-bg": "#161c10", "modal-bg": "#1e2416",
-      "text-muted": "#B5A86A", "parchment": "#F5EDD2", "accent": "#D9B93E",
-      "stamp-red": "#8B4A3A", "card-text": "#241E10", "dates-green": "#8A9A6A",
-      "complete-green": "#A08F3E", "text-main": "#D8CC9E", "card-text-muted": "#5C5030",
-      "card-text-faint": "#7A6E42", "series-purple": "#8A9ABF", "btn-text-on-accent": "#1c1604",
-      "tab-inactive": "#A69860", "card-title": "#1c1a0e", "error-text": "#B5755A",
-      "success-text": "#C9BF6F", "scrollbar": "#2c2818", "series-text": "#7A6E42",
-      "quote-text": "#332c18", "accent-shadow": "#8a7228",
+      "app-bg": "#1a140a", "loading-bg": "#201808", "modal-bg": "#2a2010",
+      "text-muted": "#C9B26A", "parchment": "#F5EDD2", "accent": "#E0BB3E",
+      "stamp-red": "#8B4A3A", "card-text": "#2A2010", "dates-green": "#B0983E",
+      "complete-green": "#C9A227", "text-main": "#D8CC9E", "card-text-muted": "#5C4E28",
+      "card-text-faint": "#8A7440", "series-purple": "#A6934A", "btn-text-on-accent": "#1c1604",
+      "tab-inactive": "#B5A26A", "card-title": "#201A0C", "error-text": "#B5755A",
+      "success-text": "#D9C468", "scrollbar": "#302810", "series-text": "#8A7440",
+      "quote-text": "#362c14", "accent-shadow": "#8a7228",
     },
   },
   dwarven: {
@@ -234,6 +234,12 @@ const THEMES = {
     },
   },
 };
+const THEME_GROUPS = [
+  { label: null, keys: ["classic"] },
+  { label: "Lord of the Rings", keys: ["shire", "gondor", "elvish", "dwarven"] },
+  { label: "Hogwarts Houses", keys: ["gryffindor", "ravenclaw", "hufflepuff", "slytherin"] },
+  { label: "Other Worlds", keys: ["dune", "acotar", "stormlight"] },
+];
 const STATUS_ORDER = ["In Progress", "TBR", "Read", "DNF"];
 const STATUS_LABEL = {
   "TBR": "To Be Read",
@@ -2380,25 +2386,33 @@ function ReadingLedger({ uid, email, onSignOut }) {
             <div style={styles.menuDivider} />
 
             <div style={{ ...styles.label, marginTop: 0 }}>Theme</div>
-            <div style={styles.themeGrid}>
-              {Object.entries(THEMES).map(([key, t]) => (
-                <button
-                  key={key}
-                  onClick={() => setThemeName(key)}
-                  style={{
-                    ...styles.themeSwatchBtn,
-                    borderColor: key === themeName ? t.vars.accent : "rgba(201,194,172,0.2)",
-                  }}
-                >
-                  <span style={{ ...styles.themeSwatchDots }}>
-                    <span style={{ ...styles.themeDot, background: t.vars["app-bg"] }} />
-                    <span style={{ ...styles.themeDot, background: t.vars.accent }} />
-                    <span style={{ ...styles.themeDot, background: t.vars.parchment }} />
-                  </span>
-                  <span style={{ color: key === themeName ? t.vars.accent : "#C9C2AC" }}>{t.label}</span>
-                </button>
-              ))}
-            </div>
+            {THEME_GROUPS.map(group => (
+              <div key={group.label || "default"}>
+                {group.label && <div style={styles.themeGroupLabel}>{group.label}</div>}
+                <div style={styles.themeGrid}>
+                  {group.keys.map(key => {
+                    const t = THEMES[key];
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => setThemeName(key)}
+                        style={{
+                          ...styles.themeSwatchBtn,
+                          borderColor: key === themeName ? t.vars.accent : "rgba(201,194,172,0.2)",
+                        }}
+                      >
+                        <span style={{ ...styles.themeSwatchDots }}>
+                          <span style={{ ...styles.themeDot, background: t.vars.accent }} />
+                          <span style={{ ...styles.themeDot, background: t.vars["stamp-red"] }} />
+                          <span style={{ ...styles.themeDot, background: t.vars["complete-green"] }} />
+                        </span>
+                        <span style={{ color: key === themeName ? t.vars.accent : "#C9C2AC" }}>{t.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
 
             <div style={styles.menuDivider} />
 
@@ -2505,6 +2519,15 @@ const styles = {
   menuDivider: {
     borderTop: "1px dashed rgba(201,194,172,0.2)",
     margin: "14px 0",
+  },
+  themeGroupLabel: {
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: 10.5,
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+    color: "#8B8676",
+    marginTop: 14,
+    marginBottom: 2,
   },
   themeGrid: {
     display: "grid",
