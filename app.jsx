@@ -69,6 +69,61 @@ function MenuIcon({ size = 20 }) {
 }
 
 const DATA_VERSION = 2;
+
+const THEMES = {
+  classic: {
+    label: "Classic Ledger",
+    vars: {
+      "app-bg": "#0f1813", "loading-bg": "#131f19", "modal-bg": "#1c2f26",
+      "text-muted": "#8B8676", "parchment": "#EFE7D2", "accent": "#B8874A",
+      "stamp-red": "#A13D2D", "card-text": "#2A2118", "dates-green": "#6E7F52",
+      "complete-green": "#4C7A5D", "text-main": "#C9C2AC", "card-text-muted": "#5A4E38",
+      "card-text-faint": "#8A7A5C", "series-purple": "#8A7CB0", "btn-text-on-accent": "#1a140c",
+      "tab-inactive": "#9a9482", "card-title": "#231B12", "error-text": "#C97A63",
+      "success-text": "#8FAF8B", "scrollbar": "#3a4a3f", "series-text": "#7A6B4C",
+      "quote-text": "#4A4030", "accent-shadow": "#7A5C33",
+    },
+  },
+  shire: {
+    label: "The Shire",
+    vars: {
+      "app-bg": "#14200f", "loading-bg": "#182813", "modal-bg": "#1e3018",
+      "text-muted": "#9C9270", "parchment": "#F0E6C8", "accent": "#8A6D3B",
+      "stamp-red": "#8B3A2A", "card-text": "#2E2410", "dates-green": "#5C7A3A",
+      "complete-green": "#4F7942", "text-main": "#C4BFA0", "card-text-muted": "#5C4A2A",
+      "card-text-faint": "#7A6234", "series-purple": "#6B7A4A", "btn-text-on-accent": "#201804",
+      "tab-inactive": "#8F8560", "card-title": "#23190A", "error-text": "#B5654A",
+      "success-text": "#8FAF6B", "scrollbar": "#3a4020", "series-text": "#6E6038",
+      "quote-text": "#4A3A20", "accent-shadow": "#5C4622",
+    },
+  },
+  wizarding: {
+    label: "Wizarding",
+    vars: {
+      "app-bg": "#1a0e12", "loading-bg": "#200f14", "modal-bg": "#2b141a",
+      "text-muted": "#9C8676", "parchment": "#EDE1C0", "accent": "#C9A227",
+      "stamp-red": "#7A1F2B", "card-text": "#241512", "dates-green": "#5C6E4A",
+      "complete-green": "#2F5D3A", "text-main": "#C9BBA8", "card-text-muted": "#5A4030",
+      "card-text-faint": "#7A5C40", "series-purple": "#5C4A8A", "btn-text-on-accent": "#1c1004",
+      "tab-inactive": "#8F7A6C", "card-title": "#20120E", "error-text": "#C25A4A",
+      "success-text": "#7FAF7F", "scrollbar": "#3a2028", "series-text": "#6E5438",
+      "quote-text": "#40241C", "accent-shadow": "#7A5E1A",
+    },
+  },
+  stormlight: {
+    label: "Stormlight",
+    vars: {
+      "app-bg": "#0d1620", "loading-bg": "#101a26", "modal-bg": "#16243a",
+      "text-muted": "#8290A0", "parchment": "#E8ECEF", "accent": "#4E8DBB",
+      "stamp-red": "#B0453A", "card-text": "#16202A", "dates-green": "#5E8A8C",
+      "complete-green": "#3E8C7A", "text-main": "#C4D0DA", "card-text-muted": "#45505C",
+      "card-text-faint": "#5C6C78", "series-purple": "#6C7CBB", "btn-text-on-accent": "#071018",
+      "tab-inactive": "#8A96A2", "card-title": "#101A22", "error-text": "#C97A63",
+      "success-text": "#7FC7B8", "scrollbar": "#263040", "series-text": "#56626C",
+      "quote-text": "#2A343E", "accent-shadow": "#2E5C78",
+    },
+  },
+};
 const STATUS_ORDER = ["In Progress", "TBR", "Read", "DNF"];
 const STATUS_LABEL = {
   "TBR": "To Be Read",
@@ -297,7 +352,7 @@ const GENRE_COLORS = {
 };
 function genreColor(genre){
   const g = (genre||"Other").split(",")[0].trim();
-  return GENRE_COLORS[g] || "#8B8676";
+  return GENRE_COLORS[g] || "var(--text-muted)";
 }
 function StatBlock({ label, value, sub }) {
   return (
@@ -352,7 +407,7 @@ function StarRating({ value, onChange, size = 15, readOnly = false }) {
             }}
           >
             <span style={{ position: "absolute", top: 0, left: 0, color: "rgba(122,107,76,0.3)" }}>{"\u2605"}</span>
-            <span style={{ position: "absolute", top: 0, left: 0, width: `${fillPct}%`, overflow: "hidden", whiteSpace: "nowrap", color: "#B8874A" }}>{"\u2605"}</span>
+            <span style={{ position: "absolute", top: 0, left: 0, width: `${fillPct}%`, overflow: "hidden", whiteSpace: "nowrap", color: "var(--accent)" }}>{"\u2605"}</span>
           </span>
         );
       })}
@@ -362,11 +417,11 @@ function StarRating({ value, onChange, size = 15, readOnly = false }) {
 
 function StatusStamp({ status }) {
   const cfg = {
-    "Read": { color: "#4C7A5D", label: "READ" },
-    "In Progress": { color: "#B8874A", label: "READING" },
-    "TBR": { color: "#8B8676", label: "SHELVED" },
-    "DNF": { color: "#A13D2D", label: "DNF" },
-  }[status] || { color: "#8B8676", label: status };
+    "Read": { color: "var(--complete-green)", label: "READ" },
+    "In Progress": { color: "var(--accent)", label: "READING" },
+    "TBR": { color: "var(--text-muted)", label: "SHELVED" },
+    "DNF": { color: "var(--stamp-red)", label: "DNF" },
+  }[status] || { color: "var(--text-muted)", label: status };
   return (
     <span style={{ ...styles.stamp, color: cfg.color, borderColor: cfg.color }}>
       {cfg.label}
@@ -659,6 +714,13 @@ function ReadingLedger({ uid, email, onSignOut }) {
   const [friendSummaryError, setFriendSummaryError] = useState("");
 
   const profileRef = useMemo(() => (uid ? firebase.firestore().collection("users").doc(uid) : null), [uid]);
+  const themeName = (profile && profile.theme && THEMES[profile.theme]) ? profile.theme : "classic";
+  const theme = THEMES[themeName];
+
+  function setThemeName(name) {
+    if (!profileRef || !THEMES[name]) return;
+    profileRef.set({ theme: name }, { merge: true }).catch(e => console.error("save theme failed", e));
+  }
   const publicSummaryRef = useMemo(() => (uid ? firebase.firestore().collection("users").doc(uid).collection("library").doc("publicSummary") : null), [uid]);
   const friendsRef = useMemo(() => (uid ? firebase.firestore().collection("users").doc(uid).collection("friends") : null), [uid]);
 
@@ -1368,16 +1430,19 @@ function ReadingLedger({ uid, email, onSignOut }) {
   return (
     <div style={styles.app}>
       <style>{`
+        :root {
+          ${Object.entries(theme.vars).map(([k, v]) => `--${k}: ${v};`).join("\n          ")}
+        }
         @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
         * { box-sizing: border-box; }
         body { margin: 0; }
         ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-thumb { background: #3a4a3f; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 4px; }
         .spin { animation: spin 1s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg);} to { transform: rotate(360deg);} }
         input, select, button, textarea { font-family: 'Inter', sans-serif; }
-        input:focus, select:focus, textarea:focus { outline: 2px solid #B8874A; outline-offset: 1px; }
-        button:focus-visible { outline: 2px solid #B8874A; outline-offset: 2px; }
+        input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+        button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
         @media (max-width: 640px) {
           .cardGrid { grid-template-columns: 1fr !important; }
           .statGrid { grid-template-columns: repeat(2, 1fr) !important; }
@@ -1427,7 +1492,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
               <div style={styles.heroLabel}>books finished in {currentYear}</div>
               <div style={styles.shelf}>
                 {Array.from({ length: Math.max(curGoal, curStats.read, 1) }).map((_, i) => (
-                  <div key={i} style={{ ...styles.tick, background: i < curStats.read ? "#B8874A" : "rgba(201,194,172,0.15)" }} />
+                  <div key={i} style={{ ...styles.tick, background: i < curStats.read ? "var(--accent)" : "rgba(201,194,172,0.15)" }} />
                 ))}
               </div>
               {curGoal > 0 && (
@@ -1472,7 +1537,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
           <div>
             <div style={styles.toolbar}>
               <div style={styles.searchWrap}>
-                <Search size={14} color="#8B8676" />
+                <Search size={14} color="var(--text-muted)" />
                 <input style={styles.searchInput} placeholder={"Search title, author, series\u2026"} value={tbrSearch} onChange={e => setTbrSearch(e.target.value)} />
               </div>
               <div style={styles.filterRowPair}>
@@ -1545,7 +1610,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
           <div>
             <div style={styles.toolbar}>
               <div style={styles.searchWrap}>
-                <Search size={14} color="#8B8676" />
+                <Search size={14} color="var(--text-muted)" />
                 <input style={styles.searchInput} placeholder={"Search your library\u2026"} value={libSearch} onChange={e => setLibSearch(e.target.value)} />
               </div>
               <div style={styles.filterRow}>
@@ -1607,7 +1672,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
           <div>
             <div style={styles.toolbar}>
               <div style={styles.searchWrap}>
-                <Search size={14} color="#8B8676" />
+                <Search size={14} color="var(--text-muted)" />
                 <input style={styles.searchInput} placeholder={"Search series or author\u2026"} value={seriesSearch} onChange={e => setSeriesSearch(e.target.value)} />
               </div>
               <select style={styles.select} value={seriesStatusFilter} onChange={e => setSeriesStatusFilter(e.target.value)}>
@@ -1625,13 +1690,13 @@ function ReadingLedger({ uid, email, onSignOut }) {
               {filteredSeries.map(s => {
                 const pct = s.totalBooks ? Math.min(100, Math.round((s.readCount / s.totalBooks) * 100)) : 0;
                 const cfg = {
-                  "Reading": "#B8874A",
-                  "Started": "#8A7CB0",
-                  "Caught up": "#4C7A5D",
-                  "Complete": "#4C7A5D",
-                  "Not started": "#8B8676",
-                  "DNF": "#A13D2D",
-                }[s.status] || "#8B8676";
+                  "Reading": "var(--accent)",
+                  "Started": "var(--series-purple)",
+                  "Caught up": "var(--complete-green)",
+                  "Complete": "var(--complete-green)",
+                  "Not started": "var(--text-muted)",
+                  "DNF": "var(--stamp-red)",
+                }[s.status] || "var(--text-muted)";
                 return (
                   <div key={s.name} style={styles.seriesRow} onClick={() => setSelectedSeriesName(s.name)}>
                     <div style={styles.seriesRowTop}>
@@ -1664,12 +1729,12 @@ function ReadingLedger({ uid, email, onSignOut }) {
                   <span>{s.name}</span>
                   <button style={styles.closeBtn} onClick={() => setSelectedSeriesName(null)}><X size={16} /></button>
                 </div>
-                <div style={{ fontSize: 12.5, color: "#8B8676", marginBottom: 4 }}>
+                <div style={{ fontSize: 12.5, color: "var(--text-muted)", marginBottom: 4 }}>
                   {s.author || "Unknown author"}{s.ongoing ? " \u00b7 ongoing" : ""}
                 </div>
                 <div style={styles.seriesProgressRow}>
                   <div style={styles.seriesProgressTrack}>
-                    <div style={{ ...styles.seriesProgressFill, width: `${pct}%`, background: "#B8874A" }} />
+                    <div style={{ ...styles.seriesProgressFill, width: `${pct}%`, background: "var(--accent)" }} />
                   </div>
                   <span style={styles.seriesProgressLabel}>{s.readCount} / {s.totalBooks}</span>
                 </div>
@@ -1687,7 +1752,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
                   />
                   {s.totalBooksOverridden && (
                     <button
-                      style={{ background: "none", border: "none", color: "#8B8676", fontSize: 11, cursor: "pointer", textDecoration: "underline" }}
+                      style={{ background: "none", border: "none", color: "var(--text-muted)", fontSize: 11, cursor: "pointer", textDecoration: "underline" }}
                       onClick={() => updateSeriesOverride(s.name, { totalBooks: null })}
                     >
                       reset to default
@@ -1739,7 +1804,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
                           </div>
                         )}
                         {gap > 0 && (
-                          <div style={{ fontSize: 11.5, color: "#8B8676", fontStyle: "italic", marginBottom: 14 }}>
+                          <div style={{ fontSize: 11.5, color: "var(--text-muted)", fontStyle: "italic", marginBottom: 14 }}>
                             {gap} more book{gap !== 1 ? "s" : ""} in this series {gap !== 1 ? "aren't" : "isn't"} in your library yet.
                           </div>
                         )}
@@ -1934,7 +1999,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
                   Copy
                 </button>
               </div>
-              <div style={{ fontSize: 11.5, color: "#8B8676", marginTop: 6 }}>
+              <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 6 }}>
                 {"Share this code with a friend so they can add you. Adding each other is mutual \u2014 you'll both see each other's currently-reading, finished books, and yearly stats. Your to-be-read list and quotes stay private."}
               </div>
             </div>
@@ -1983,7 +2048,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
             </div>
             {friendSummaryLoading && (
               <div style={{ display: "flex", justifyContent: "center", padding: 20 }}>
-                <Loader2 className="spin" size={22} color="#B8874A" />
+                <Loader2 className="spin" size={22} color="var(--accent)" />
               </div>
             )}
             {friendSummaryError && <div style={styles.lookupError}>{friendSummaryError}</div>}
@@ -2005,7 +2070,7 @@ function ReadingLedger({ uid, email, onSignOut }) {
                     const s = (friendSummary.yearStats || {})[new Date().getFullYear()] || { read: 0, pages: 0, audio: 0 };
                     const g = Number((friendSummary.goals || {})[new Date().getFullYear()]) || 0;
                     return (
-                      <div style={{ fontSize: 12.5, color: "#8B8676" }}>
+                      <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>
                         {s.read} book{s.read !== 1 ? "s" : ""} finished{g ? ` (goal: ${g})` : ""}{" \u00b7 "}{Math.round(s.pages).toLocaleString()} pages{" \u00b7 "}{s.audio.toFixed(1)} audio hrs
                       </div>
                     );
@@ -2154,12 +2219,12 @@ function ReadingLedger({ uid, email, onSignOut }) {
                 <label style={styles.label}>{"Your rating (tap a star \u2014 left/right side picks the quarter)"}</label>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <StarRating value={editDraft.rating} size={22} onChange={n => setEditDraft({ ...editDraft, rating: n })} />
-                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "#8B8676", minWidth: 34 }}>
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "var(--text-muted)", minWidth: 34 }}>
                     {editDraft.rating ? editDraft.rating.toFixed(2).replace(/\.?0+$/, "") : "\u2014"}
                   </span>
                   {editDraft.rating ? (
                     <button
-                      style={{ background: "none", border: "none", color: "#8B8676", fontSize: 11, cursor: "pointer", textDecoration: "underline" }}
+                      style={{ background: "none", border: "none", color: "var(--text-muted)", fontSize: 11, cursor: "pointer", textDecoration: "underline" }}
                       onClick={() => setEditDraft({ ...editDraft, rating: null })}
                     >
                       clear
@@ -2204,6 +2269,29 @@ function ReadingLedger({ uid, email, onSignOut }) {
 
             <div style={styles.menuDivider} />
 
+            <div style={{ ...styles.label, marginTop: 0 }}>Theme</div>
+            <div style={styles.themeGrid}>
+              {Object.entries(THEMES).map(([key, t]) => (
+                <button
+                  key={key}
+                  onClick={() => setThemeName(key)}
+                  style={{
+                    ...styles.themeSwatchBtn,
+                    borderColor: key === themeName ? t.vars.accent : "rgba(201,194,172,0.2)",
+                  }}
+                >
+                  <span style={{ ...styles.themeSwatchDots }}>
+                    <span style={{ ...styles.themeDot, background: t.vars["app-bg"] }} />
+                    <span style={{ ...styles.themeDot, background: t.vars.accent }} />
+                    <span style={{ ...styles.themeDot, background: t.vars.parchment }} />
+                  </span>
+                  <span style={{ color: key === themeName ? t.vars.accent : "#C9C2AC" }}>{t.label}</span>
+                </button>
+              ))}
+            </div>
+
+            <div style={styles.menuDivider} />
+
             <div style={{ ...styles.label, marginTop: 0 }}>Import / Export</div>
             <button style={styles.menuActionBtn} onClick={exportCSV}>
               <Download size={15} /> Export to CSV
@@ -2245,8 +2333,8 @@ function ReadingLedger({ uid, email, onSignOut }) {
 const styles = {
   app: {
     minHeight: "100vh",
-    background: "radial-gradient(ellipse at top, #1c2f26 0%, #131f19 60%, #0f1813 100%)",
-    color: "#C9C2AC",
+    background: "radial-gradient(ellipse at top, var(--modal-bg) 0%, var(--loading-bg) 60%, var(--app-bg) 100%)",
+    color: "var(--text-main)",
     fontFamily: "'Inter', sans-serif",
     padding: "24px 20px 60px",
   },
@@ -2256,14 +2344,14 @@ const styles = {
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    background: "#131f19",
-    color: "#B8874A",
+    background: "var(--loading-bg)",
+    color: "var(--accent)",
   },
   authInput: {
     width: "100%",
     background: "rgba(239,231,210,0.08)",
     border: "1px solid rgba(201,194,172,0.25)",
-    color: "#EFE7D2",
+    color: "var(--parchment)",
     borderRadius: 4,
     padding: "10px 12px",
     fontSize: 14,
@@ -2284,7 +2372,7 @@ const styles = {
   menuBtn: {
     background: "transparent",
     border: "1px solid rgba(201,194,172,0.25)",
-    color: "#EFE7D2",
+    color: "var(--parchment)",
     borderRadius: 4,
     padding: "8px 10px",
     cursor: "pointer",
@@ -2300,13 +2388,41 @@ const styles = {
   },
   menuEmail: {
     fontSize: 11.5,
-    color: "#8B8676",
+    color: "var(--text-muted)",
     fontFamily: "'JetBrains Mono', monospace",
     wordBreak: "break-all",
   },
   menuDivider: {
     borderTop: "1px dashed rgba(201,194,172,0.2)",
     margin: "14px 0",
+  },
+  themeGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: 8,
+    marginTop: 6,
+  },
+  themeSwatchBtn: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-start",
+    gap: 6,
+    background: "rgba(239,231,210,0.04)",
+    border: "1.5px solid rgba(201,194,172,0.2)",
+    borderRadius: 4,
+    padding: "8px 10px",
+    fontSize: 12,
+    cursor: "pointer",
+  },
+  themeSwatchDots: {
+    display: "flex",
+    gap: 3,
+  },
+  themeDot: {
+    width: 14,
+    height: 14,
+    borderRadius: "50%",
+    border: "1px solid rgba(0,0,0,0.25)",
   },
   menuActionBtn: {
     display: "flex",
@@ -2315,7 +2431,7 @@ const styles = {
     width: "100%",
     background: "rgba(184,135,74,0.12)",
     border: "1px solid rgba(184,135,74,0.4)",
-    color: "#EFE7D2",
+    color: "var(--parchment)",
     borderRadius: 4,
     padding: "10px 12px",
     fontSize: 13.5,
@@ -2329,13 +2445,13 @@ const styles = {
   },
   accountEmail: {
     fontSize: 11.5,
-    color: "#8B8676",
+    color: "var(--text-muted)",
     fontFamily: "'JetBrains Mono', monospace",
   },
   signOutBtn: {
     background: "transparent",
     border: "1px solid rgba(201,194,172,0.25)",
-    color: "#9a9482",
+    color: "var(--tab-inactive)",
     borderRadius: 3,
     padding: "6px 10px",
     fontSize: 11.5,
@@ -2346,14 +2462,14 @@ const styles = {
     fontStyle: "italic",
     fontWeight: 600,
     fontSize: 34,
-    color: "#EFE7D2",
+    color: "var(--parchment)",
     letterSpacing: 0.3,
   },
   brandSub: {
     fontFamily: "'JetBrains Mono', monospace",
     fontSize: 11.5,
     letterSpacing: 0.5,
-    color: "#8B8676",
+    color: "var(--text-muted)",
     marginTop: 4,
     textTransform: "uppercase",
   },
@@ -2370,7 +2486,7 @@ const styles = {
     gap: 6,
     background: "transparent",
     border: "1px solid rgba(201,194,172,0.18)",
-    color: "#9a9482",
+    color: "var(--tab-inactive)",
     fontSize: 12.5,
     letterSpacing: 0.4,
     padding: "8px 14px",
@@ -2381,8 +2497,8 @@ const styles = {
   },
   tabBtnActive: {
     background: "rgba(184,135,74,0.14)",
-    borderColor: "#B8874A",
-    color: "#EFE7D2",
+    borderColor: "var(--accent)",
+    color: "var(--parchment)",
   },
   content: {
     maxWidth: 1000,
@@ -2398,12 +2514,12 @@ const styles = {
     fontFamily: "'Fraunces', serif",
     fontWeight: 700,
     fontSize: 64,
-    color: "#EFE7D2",
+    color: "var(--parchment)",
     lineHeight: 1,
   },
   heroOf: {
     fontSize: 28,
-    color: "#8B8676",
+    color: "var(--text-muted)",
     fontWeight: 400,
   },
   heroLabel: {
@@ -2411,7 +2527,7 @@ const styles = {
     fontSize: 12,
     textTransform: "uppercase",
     letterSpacing: 1,
-    color: "#8B8676",
+    color: "var(--text-muted)",
     marginTop: 8,
   },
   shelf: {
@@ -2430,7 +2546,7 @@ const styles = {
   heroSub: {
     marginTop: 14,
     fontSize: 12.5,
-    color: "#B8874A",
+    color: "var(--accent)",
     fontFamily: "'JetBrains Mono', monospace",
   },
   statGrid: {
@@ -2450,18 +2566,18 @@ const styles = {
     fontFamily: "'Fraunces', serif",
     fontWeight: 600,
     fontSize: 26,
-    color: "#EFE7D2",
+    color: "var(--parchment)",
   },
   statLabel: {
     fontSize: 11,
-    color: "#8B8676",
+    color: "var(--text-muted)",
     marginTop: 4,
     textTransform: "uppercase",
     letterSpacing: 0.4,
   },
   statSub: {
     fontSize: 10.5,
-    color: "#6E7F52",
+    color: "var(--dates-green)",
     marginTop: 2,
   },
   sectionBlock: {
@@ -2471,7 +2587,7 @@ const styles = {
     fontFamily: "'Fraunces', serif",
     fontStyle: "italic",
     fontSize: 19,
-    color: "#EFE7D2",
+    color: "var(--parchment)",
     marginBottom: 14,
   },
   cardGrid: {
@@ -2488,7 +2604,7 @@ const styles = {
   viewToggleBtn: {
     background: "transparent",
     border: "none",
-    color: "#8B8676",
+    color: "var(--text-muted)",
     padding: "7px 9px",
     cursor: "pointer",
     display: "flex",
@@ -2496,7 +2612,7 @@ const styles = {
   },
   viewToggleBtnActive: {
     background: "rgba(184,135,74,0.18)",
-    color: "#EFE7D2",
+    color: "var(--parchment)",
   },
   listView: {
     display: "flex",
@@ -2507,8 +2623,8 @@ const styles = {
     display: "flex",
     alignItems: "center",
     gap: 12,
-    background: "#EFE7D2",
-    color: "#2A2118",
+    background: "var(--parchment)",
+    color: "var(--card-text)",
     borderRadius: 3,
     padding: "10px 14px",
     cursor: "pointer",
@@ -2534,14 +2650,14 @@ const styles = {
     fontFamily: "'Fraunces', serif",
     fontWeight: 600,
     fontSize: 14.5,
-    color: "#231B12",
+    color: "var(--card-title)",
     whiteSpace: "nowrap",
     overflow: "hidden",
     textOverflow: "ellipsis",
   },
   listSubLine: {
     fontSize: 11.5,
-    color: "#5A4E38",
+    color: "var(--card-text-muted)",
     whiteSpace: "nowrap",
     overflow: "hidden",
     textOverflow: "ellipsis",
@@ -2553,8 +2669,8 @@ const styles = {
     flexShrink: 0,
   },
   card: {
-    background: "#EFE7D2",
-    color: "#2A2118",
+    background: "var(--parchment)",
+    color: "var(--card-text)",
     borderRadius: 3,
     padding: "10px 12px 9px",
     boxShadow: "0 3px 10px rgba(0,0,0,0.25)",
@@ -2589,7 +2705,7 @@ const styles = {
     fontFamily: "'Fraunces', serif",
     fontWeight: 700,
     fontSize: 13,
-    color: "#B8874A",
+    color: "var(--accent)",
     background: "rgba(184,135,74,0.12)",
     padding: "1px 8px",
     borderRadius: 10,
@@ -2600,9 +2716,9 @@ const styles = {
     fontFamily: "'Fraunces', serif",
     fontWeight: 700,
     fontSize: 13,
-    color: "#2A2118",
+    color: "var(--card-text)",
     background: "#fff",
-    border: "1px solid #B8874A",
+    border: "1px solid var(--accent)",
     borderRadius: 10,
     padding: "1px 6px",
   },
@@ -2616,8 +2732,8 @@ const styles = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    background: "#2A2118",
-    color: "#EFE7D2",
+    background: "var(--card-text)",
+    color: "var(--parchment)",
     border: "none",
     borderRadius: 3,
     cursor: "pointer",
@@ -2628,7 +2744,7 @@ const styles = {
   callNumber: {
     fontFamily: "'JetBrains Mono', monospace",
     fontSize: 10,
-    color: "#8A7A5C",
+    color: "var(--card-text-faint)",
     letterSpacing: 0.3,
   },
   stamp: {
@@ -2646,7 +2762,7 @@ const styles = {
     fontWeight: 600,
     fontSize: 14.5,
     lineHeight: 1.2,
-    color: "#231B12",
+    color: "var(--card-title)",
     minHeight: "2.2em",
     display: "-webkit-box",
     WebkitLineClamp: 2,
@@ -2656,7 +2772,7 @@ const styles = {
   cardAuthor: {
     fontSize: 11.5,
     fontStyle: "italic",
-    color: "#5A4E38",
+    color: "var(--card-text-muted)",
     minHeight: "1.25em",
     whiteSpace: "nowrap",
     overflow: "hidden",
@@ -2664,7 +2780,7 @@ const styles = {
   },
   cardSeries: {
     fontSize: 10.5,
-    color: "#7A6B4C",
+    color: "var(--series-text)",
     minHeight: "1.25em",
     whiteSpace: "nowrap",
     overflow: "hidden",
@@ -2681,7 +2797,7 @@ const styles = {
   metaItem: {
     fontFamily: "'JetBrains Mono', monospace",
     fontSize: 9.5,
-    color: "#5A4E38",
+    color: "var(--card-text-muted)",
     background: "rgba(42,33,24,0.06)",
     padding: "1px 5px",
     borderRadius: 2,
@@ -2699,7 +2815,7 @@ const styles = {
   },
   cardCompleted: {
     fontSize: 9.5,
-    color: "#6E7F52",
+    color: "var(--dates-green)",
     fontFamily: "'JetBrains Mono', monospace",
     marginTop: 1,
     minHeight: "1.25em",
@@ -2716,7 +2832,7 @@ const styles = {
   quoteToggle: {
     background: "none",
     border: "none",
-    color: "#8A7A5C",
+    color: "var(--card-text-faint)",
     fontSize: 10.5,
     display: "flex",
     alignItems: "center",
@@ -2727,7 +2843,7 @@ const styles = {
   quoteBlock: {
     fontSize: 11.5,
     fontStyle: "italic",
-    color: "#4A4030",
+    color: "var(--quote-text)",
     background: "rgba(42,33,24,0.06)",
     padding: "8px 10px",
     borderRadius: 2,
@@ -2744,8 +2860,8 @@ const styles = {
     alignItems: "center",
     gap: 3,
     fontSize: 10,
-    background: "#2A2118",
-    color: "#EFE7D2",
+    background: "var(--card-text)",
+    color: "var(--parchment)",
     border: "none",
     borderRadius: 2,
     padding: "4px 7px",
@@ -2757,8 +2873,8 @@ const styles = {
     gap: 3,
     fontSize: 10,
     background: "transparent",
-    color: "#A13D2D",
-    border: "1px solid #A13D2D",
+    color: "var(--stamp-red)",
+    border: "1px solid var(--stamp-red)",
     borderRadius: 2,
     padding: "4px 7px",
     cursor: "pointer",
@@ -2767,7 +2883,7 @@ const styles = {
     marginLeft: "auto",
     background: "transparent",
     border: "none",
-    color: "#8A7A5C",
+    color: "var(--card-text-faint)",
     cursor: "pointer",
     padding: "4px 5px",
   },
@@ -2809,14 +2925,14 @@ const styles = {
   searchInput: {
     background: "transparent",
     border: "none",
-    color: "#EFE7D2",
+    color: "var(--parchment)",
     fontSize: 13,
     width: "100%",
   },
   select: {
     background: "rgba(239,231,210,0.05)",
     border: "1px solid rgba(201,194,172,0.18)",
-    color: "#C9C2AC",
+    color: "var(--text-main)",
     borderRadius: 3,
     padding: "7px 8px",
     fontSize: 12.5,
@@ -2824,7 +2940,7 @@ const styles = {
   selectHalf: {
     background: "rgba(239,231,210,0.05)",
     border: "1px solid rgba(201,194,172,0.18)",
-    color: "#C9C2AC",
+    color: "var(--text-main)",
     borderRadius: 3,
     padding: "7px 6px",
     fontSize: 12.5,
@@ -2835,8 +2951,8 @@ const styles = {
     display: "flex",
     alignItems: "center",
     gap: 6,
-    background: "#B8874A",
-    color: "#1a140c",
+    background: "var(--accent)",
+    color: "var(--btn-text-on-accent)",
     border: "none",
     borderRadius: 3,
     padding: "8px 14px",
@@ -2847,13 +2963,13 @@ const styles = {
   countLine: {
     fontFamily: "'JetBrains Mono', monospace",
     fontSize: 11,
-    color: "#8B8676",
+    color: "var(--text-muted)",
     marginBottom: 12,
   },
   emptyState: {
     textAlign: "center",
     padding: "40px 0",
-    color: "#8B8676",
+    color: "var(--text-muted)",
     fontStyle: "italic",
     fontFamily: "'Fraunces', serif",
     fontSize: 15,
@@ -2869,7 +2985,7 @@ const styles = {
     gap: 8,
     background: "none",
     border: "none",
-    color: "#EFE7D2",
+    color: "var(--parchment)",
     cursor: "pointer",
     padding: "10px 0",
     width: "100%",
@@ -2884,7 +3000,7 @@ const styles = {
     marginLeft: "auto",
     fontFamily: "'JetBrains Mono', monospace",
     fontSize: 11,
-    color: "#8B8676",
+    color: "var(--text-muted)",
   },
   tableWrap: {
     overflowX: "auto",
@@ -2903,7 +3019,7 @@ const styles = {
     fontSize: 10.5,
     textTransform: "uppercase",
     letterSpacing: 0.5,
-    color: "#8B8676",
+    color: "var(--text-muted)",
   },
   td: {
     padding: "8px 10px",
@@ -2920,7 +3036,7 @@ const styles = {
   },
   emptyMonthNote: {
     fontSize: 12,
-    color: "#8B8676",
+    color: "var(--text-muted)",
     fontStyle: "italic",
     fontFamily: "'Fraunces', serif",
   },
@@ -2938,10 +3054,10 @@ const styles = {
   },
   monthName: {
     width: 40,
-    color: "#EFE7D2",
+    color: "var(--parchment)",
   },
   monthStat: {
-    color: "#8B8676",
+    color: "var(--text-muted)",
     minWidth: 70,
   },
   barChart: {
@@ -2967,13 +3083,13 @@ const styles = {
   },
   bar: {
     width: "100%",
-    background: "linear-gradient(180deg, #B8874A, #7A5C33)",
+    background: "linear-gradient(180deg, var(--accent), var(--accent-shadow))",
     borderRadius: "2px 2px 0 0",
   },
   barLabel: {
     fontFamily: "'JetBrains Mono', monospace",
     fontSize: 10,
-    color: "#8B8676",
+    color: "var(--text-muted)",
   },
   seriesList: {
     display: "flex",
@@ -2996,7 +3112,7 @@ const styles = {
   },
   seriesBookTitle: {
     fontSize: 13,
-    color: "#EFE7D2",
+    color: "var(--parchment)",
     marginBottom: 4,
     whiteSpace: "nowrap",
     overflow: "hidden",
@@ -3012,12 +3128,12 @@ const styles = {
     fontFamily: "'Fraunces', serif",
     fontWeight: 600,
     fontSize: 16,
-    color: "#EFE7D2",
+    color: "var(--parchment)",
   },
   seriesAuthor: {
     fontSize: 12,
     fontStyle: "italic",
-    color: "#8B8676",
+    color: "var(--text-muted)",
     marginTop: 2,
   },
   seriesProgressRow: {
@@ -3040,7 +3156,7 @@ const styles = {
   seriesProgressLabel: {
     fontFamily: "'JetBrains Mono', monospace",
     fontSize: 11,
-    color: "#8B8676",
+    color: "var(--text-muted)",
     minWidth: 42,
     textAlign: "right",
   },
@@ -3068,26 +3184,26 @@ const styles = {
     fontFamily: "'Fraunces', serif",
     fontSize: 16,
     fontWeight: 600,
-    color: "#EFE7D2",
+    color: "var(--parchment)",
     width: 50,
   },
   goalInput: {
     width: 70,
     background: "rgba(239,231,210,0.05)",
     border: "1px solid rgba(201,194,172,0.2)",
-    color: "#EFE7D2",
+    color: "var(--parchment)",
     borderRadius: 3,
     padding: "6px 8px",
     fontFamily: "'JetBrains Mono', monospace",
   },
   goalSuffix: {
     fontSize: 11.5,
-    color: "#8B8676",
+    color: "var(--text-muted)",
   },
   goalActual: {
     marginLeft: "auto",
     fontSize: 11.5,
-    color: "#6E7F52",
+    color: "var(--dates-green)",
     fontFamily: "'JetBrains Mono', monospace",
   },
   addYearBtn: {
@@ -3096,7 +3212,7 @@ const styles = {
     gap: 6,
     background: "transparent",
     border: "1px dashed rgba(184,135,74,0.5)",
-    color: "#B8874A",
+    color: "var(--accent)",
     borderRadius: 3,
     padding: "9px 12px",
     fontSize: 12.5,
@@ -3112,7 +3228,7 @@ const styles = {
     fontFamily: "'JetBrains Mono', monospace",
     fontSize: 22,
     letterSpacing: 3,
-    color: "#EFE7D2",
+    color: "var(--parchment)",
     background: "rgba(184,135,74,0.12)",
     border: "1px solid rgba(184,135,74,0.4)",
     borderRadius: 4,
@@ -3130,11 +3246,11 @@ const styles = {
     flex: 1,
     fontFamily: "'Fraunces', serif",
     fontSize: 14.5,
-    color: "#EFE7D2",
+    color: "var(--parchment)",
   },
   friendBookLine: {
     fontSize: 12.5,
-    color: "#EFE7D2",
+    color: "var(--parchment)",
     padding: "4px 0",
     borderBottom: "1px solid rgba(201,194,172,0.08)",
   },
@@ -3149,7 +3265,7 @@ const styles = {
     zIndex: 50,
   },
   modal: {
-    background: "#1c2f26",
+    background: "var(--modal-bg)",
     border: "1px solid rgba(184,135,74,0.3)",
     borderRadius: 6,
     padding: 22,
@@ -3165,13 +3281,13 @@ const styles = {
     fontFamily: "'Fraunces', serif",
     fontStyle: "italic",
     fontSize: 20,
-    color: "#EFE7D2",
+    color: "var(--parchment)",
     marginBottom: 16,
   },
   closeBtn: {
     background: "none",
     border: "none",
-    color: "#8B8676",
+    color: "var(--text-muted)",
     cursor: "pointer",
   },
   label: {
@@ -3179,7 +3295,7 @@ const styles = {
     fontSize: 10.5,
     textTransform: "uppercase",
     letterSpacing: 0.5,
-    color: "#8B8676",
+    color: "var(--text-muted)",
     marginBottom: 4,
     marginTop: 12,
     fontFamily: "'JetBrains Mono', monospace",
@@ -3188,7 +3304,7 @@ const styles = {
     width: "100%",
     background: "rgba(239,231,210,0.06)",
     border: "1px solid rgba(201,194,172,0.2)",
-    color: "#EFE7D2",
+    color: "var(--parchment)",
     borderRadius: 3,
     padding: "8px 10px",
     fontSize: 13.5,
@@ -3205,8 +3321,8 @@ const styles = {
     justifyContent: "center",
     width: "100%",
     background: "rgba(184,135,74,0.15)",
-    border: "1px solid #B8874A",
-    color: "#EFE7D2",
+    border: "1px solid var(--accent)",
+    color: "var(--parchment)",
     borderRadius: 3,
     padding: "9px 10px",
     fontSize: 12.5,
@@ -3215,18 +3331,18 @@ const styles = {
   },
   lookupError: {
     fontSize: 11.5,
-    color: "#C97A63",
+    color: "var(--error-text)",
     marginTop: 8,
   },
   lookupSuccess: {
     fontSize: 11.5,
-    color: "#8FAF8B",
+    color: "var(--success-text)",
     marginTop: 8,
   },
   saveBtn: {
     width: "100%",
-    background: "#B8874A",
-    color: "#1a140c",
+    background: "var(--accent)",
+    color: "var(--btn-text-on-accent)",
     border: "none",
     borderRadius: 3,
     padding: "11px 10px",
@@ -3242,8 +3358,8 @@ const styles = {
     justifyContent: "center",
     gap: 6,
     background: "transparent",
-    color: "#A13D2D",
-    border: "1px solid #A13D2D",
+    color: "var(--stamp-red)",
+    border: "1px solid var(--stamp-red)",
     borderRadius: 3,
     padding: "9px 10px",
     fontSize: 12.5,
@@ -3282,15 +3398,15 @@ function SignInScreen({ onSignIn, onSignUp, onReset, onClearStatus, error, busy,
 
   return (
     <div style={styles.loadingScreen}>
-      <div style={{ fontFamily: "'Fraunces', serif", fontStyle: "italic", fontWeight: 600, fontSize: 30, color: "#EFE7D2", marginBottom: 6 }}>
+      <div style={{ fontFamily: "'Fraunces', serif", fontStyle: "italic", fontWeight: 600, fontSize: 30, color: "var(--parchment)", marginBottom: 6 }}>
         The Reading Ledger
       </div>
-      <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "#8B8676", marginBottom: 24, textAlign: "center", maxWidth: 300 }}>
+      <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: "var(--text-muted)", marginBottom: 24, textAlign: "center", maxWidth: 300 }}>
         {subtitle}{mode !== "reset" ? " \u2014 your data is private to your account" : ""}
       </div>
 
       {mode === "reset" && resetSent ? (
-        <div style={{ color: "#8FAF8B", fontSize: 13, textAlign: "center", maxWidth: 300, marginBottom: 10 }}>
+        <div style={{ color: "var(--success-text)", fontSize: 13, textAlign: "center", maxWidth: 300, marginBottom: 10 }}>
           Check your inbox for a link to reset your password.
         </div>
       ) : (
@@ -3328,7 +3444,7 @@ function SignInScreen({ onSignIn, onSignUp, onReset, onClearStatus, error, busy,
             disabled={busy}
             style={{
               display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-              background: "#EFE7D2", color: "#2A2118", border: "none",
+              background: "var(--parchment)", color: "var(--card-text)", border: "none",
               borderRadius: 4, padding: "10px 18px", fontSize: 14, fontWeight: 600, cursor: "pointer",
               opacity: busy ? 0.6 : 1,
             }}
@@ -3343,7 +3459,7 @@ function SignInScreen({ onSignIn, onSignUp, onReset, onClearStatus, error, busy,
         {mode !== "reset" && (
           <button
             onClick={() => changeMode(mode === "signin" ? "signup" : "signin")}
-            style={{ background: "none", border: "none", color: "#8B8676", fontSize: 12, cursor: "pointer", textDecoration: "underline" }}
+            style={{ background: "none", border: "none", color: "var(--text-muted)", fontSize: 12, cursor: "pointer", textDecoration: "underline" }}
           >
             {mode === "signin" ? "New here? Create an account" : "Already have an account? Sign in"}
           </button>
@@ -3351,7 +3467,7 @@ function SignInScreen({ onSignIn, onSignUp, onReset, onClearStatus, error, busy,
         {mode === "signin" && (
           <button
             onClick={() => changeMode("reset")}
-            style={{ background: "none", border: "none", color: "#8B8676", fontSize: 12, cursor: "pointer", textDecoration: "underline" }}
+            style={{ background: "none", border: "none", color: "var(--text-muted)", fontSize: 12, cursor: "pointer", textDecoration: "underline" }}
           >
             Forgot password?
           </button>
@@ -3359,14 +3475,14 @@ function SignInScreen({ onSignIn, onSignUp, onReset, onClearStatus, error, busy,
         {mode === "reset" && (
           <button
             onClick={() => changeMode("signin")}
-            style={{ background: "none", border: "none", color: "#8B8676", fontSize: 12, cursor: "pointer", textDecoration: "underline" }}
+            style={{ background: "none", border: "none", color: "var(--text-muted)", fontSize: 12, cursor: "pointer", textDecoration: "underline" }}
           >
             Back to sign in
           </button>
         )}
       </div>
 
-      {error && <div style={{ color: "#C97A63", fontSize: 12, marginTop: 14, textAlign: "center", maxWidth: 300 }}>{error}</div>}
+      {error && <div style={{ color: "var(--error-text)", fontSize: 12, marginTop: 14, textAlign: "center", maxWidth: 300 }}>{error}</div>}
     </div>
   );
 }
