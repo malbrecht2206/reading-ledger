@@ -84,6 +84,8 @@ const THEMES = {
       "quote-text": "#4A4030", "accent-shadow": "#7A5C33",
     },
   },
+
+  // --- Lord of the Rings ---
   shire: {
     label: "The Shire",
     vars: {
@@ -97,6 +99,47 @@ const THEMES = {
       "quote-text": "#4A3A20", "accent-shadow": "#5C4622",
     },
   },
+  gondor: {
+    label: "Gondor",
+    vars: {
+      "app-bg": "#080809", "loading-bg": "#0a0a0c", "modal-bg": "#121215",
+      "text-muted": "#8A8E94", "parchment": "#EAEAE4", "accent": "#9AA6B2",
+      "stamp-red": "#8B2E2E", "card-text": "#121215", "dates-green": "#5E7A7A",
+      "complete-green": "#4A6E6E", "text-main": "#C4CCD4", "card-text-muted": "#3A4250",
+      "card-text-faint": "#5C6672", "series-purple": "#6C7CAA", "btn-text-on-accent": "#08080a",
+      "tab-inactive": "#83878e", "card-title": "#08080a", "error-text": "#B5554A",
+      "success-text": "#7FA0A0", "scrollbar": "#1a1a1e", "series-text": "#5C6672",
+      "quote-text": "#1c1c20", "accent-shadow": "#2c2e32",
+    },
+  },
+  elvish: {
+    label: "Elvish",
+    vars: {
+      "app-bg": "#12160e", "loading-bg": "#161c10", "modal-bg": "#1e2416",
+      "text-muted": "#B5A86A", "parchment": "#F5EDD2", "accent": "#D9B93E",
+      "stamp-red": "#8B4A3A", "card-text": "#241E10", "dates-green": "#8A9A6A",
+      "complete-green": "#A08F3E", "text-main": "#D8CC9E", "card-text-muted": "#5C5030",
+      "card-text-faint": "#7A6E42", "series-purple": "#8A9ABF", "btn-text-on-accent": "#1c1604",
+      "tab-inactive": "#A69860", "card-title": "#1c1a0e", "error-text": "#B5755A",
+      "success-text": "#C9BF6F", "scrollbar": "#2c2818", "series-text": "#7A6E42",
+      "quote-text": "#332c18", "accent-shadow": "#8a7228",
+    },
+  },
+  dwarven: {
+    label: "Dwarven",
+    vars: {
+      "app-bg": "#16120e", "loading-bg": "#1a1512", "modal-bg": "#241d16",
+      "text-muted": "#A69684", "parchment": "#E8DCC4", "accent": "#C9942A",
+      "stamp-red": "#A1402A", "card-text": "#241C10", "dates-green": "#7A8A6E",
+      "complete-green": "#6E8A5A", "text-main": "#C9BCA4", "card-text-muted": "#5C4E38",
+      "card-text-faint": "#7A6A4E", "series-purple": "#6E5A8A", "btn-text-on-accent": "#1c1404",
+      "tab-inactive": "#9C8C74", "card-title": "#201808", "error-text": "#C2664A",
+      "success-text": "#9FAF7F", "scrollbar": "#302818", "series-text": "#6E5E44",
+      "quote-text": "#3A2E1C", "accent-shadow": "#7A5A1E",
+    },
+  },
+
+  // --- Harry Potter houses ---
   gryffindor: {
     label: "Gryffindor",
     vars: {
@@ -149,6 +192,8 @@ const THEMES = {
       "quote-text": "#1c2e22", "accent-shadow": "#1e5238",
     },
   },
+
+  // --- Everything else ---
   dune: {
     label: "Dune",
     vars: {
@@ -163,7 +208,7 @@ const THEMES = {
     },
   },
   acotar: {
-    label: "ACOTAR",
+    label: "Night Court",
     vars: {
       "app-bg": "#140b1e", "loading-bg": "#180d24", "modal-bg": "#221430",
       "text-muted": "#9686A8", "parchment": "#EDE4F0", "accent": "#8B5FBF",
@@ -173,45 +218,6 @@ const THEMES = {
       "tab-inactive": "#8A7A9C", "card-title": "#180E20", "error-text": "#C25A7A",
       "success-text": "#7FAFA0", "scrollbar": "#2c1c3a", "series-text": "#6E5C86",
       "quote-text": "#2A1E38", "accent-shadow": "#5C3E7A",
-    },
-  },
-  gondor: {
-    label: "Gondor",
-    vars: {
-      "app-bg": "#0e1420", "loading-bg": "#121826", "modal-bg": "#1a2232",
-      "text-muted": "#8290A0", "parchment": "#EAEAE4", "accent": "#8A96A8",
-      "stamp-red": "#8B2E2E", "card-text": "#141A24", "dates-green": "#5E7A7A",
-      "complete-green": "#4A6E6E", "text-main": "#C4CCD4", "card-text-muted": "#3A4250",
-      "card-text-faint": "#5C6672", "series-purple": "#6C7CAA", "btn-text-on-accent": "#0a0e14",
-      "tab-inactive": "#8590A0", "card-title": "#10141C", "error-text": "#B5554A",
-      "success-text": "#7FA0A0", "scrollbar": "#202A38", "series-text": "#5C6672",
-      "quote-text": "#242C38", "accent-shadow": "#3A4658",
-    },
-  },
-  elvish: {
-    label: "Elvish",
-    vars: {
-      "app-bg": "#0f1a14", "loading-bg": "#13201a", "modal-bg": "#1a2c20",
-      "text-muted": "#8FA890", "parchment": "#F0EDD8", "accent": "#C9B26A",
-      "stamp-red": "#8B4A3A", "card-text": "#1C2A1E", "dates-green": "#6E9A7A",
-      "complete-green": "#5A9A6E", "text-main": "#C4D4C0", "card-text-muted": "#4A5C42",
-      "card-text-faint": "#6E8060", "series-purple": "#8A9ABF", "btn-text-on-accent": "#14200a",
-      "tab-inactive": "#8FA890", "card-title": "#16220E", "error-text": "#B5755A",
-      "success-text": "#8FCF9F", "scrollbar": "#203020", "series-text": "#6E8060",
-      "quote-text": "#2A3A24", "accent-shadow": "#7A6838",
-    },
-  },
-  dwarven: {
-    label: "Dwarven",
-    vars: {
-      "app-bg": "#16120e", "loading-bg": "#1a1512", "modal-bg": "#241d16",
-      "text-muted": "#A69684", "parchment": "#E8DCC4", "accent": "#C9942A",
-      "stamp-red": "#A1402A", "card-text": "#241C10", "dates-green": "#7A8A6E",
-      "complete-green": "#6E8A5A", "text-main": "#C9BCA4", "card-text-muted": "#5C4E38",
-      "card-text-faint": "#7A6A4E", "series-purple": "#6E5A8A", "btn-text-on-accent": "#1c1404",
-      "tab-inactive": "#9C8C74", "card-title": "#201808", "error-text": "#C2664A",
-      "success-text": "#9FAF7F", "scrollbar": "#302818", "series-text": "#6E5E44",
-      "quote-text": "#3A2E1C", "accent-shadow": "#7A5A1E",
     },
   },
   stormlight: {
